@@ -128,6 +128,82 @@ endepunkter/modeller slik at gamle genererte filer fjernes.
 kjører en HTTP-integrasjonstest som starter tjenesten på en tilfeldig port
 og sjekker statuskode, innholdstype og JSON-respons for `/ping`.
 
+### Bygg og start med run-skript
+
+Når Java, Maven og Podman eller Docker er installert, kan hele den lokale
+oppstarten gjøres med ett skript. Skriptet kjører først en preflight-sjekk av
+verktøyene og container-runtime, deretter `mvn clean verify`, image-bygging og
+oppstart av tjenesten på port 8080. Hvis begge runtime-ene er installert,
+blir du bedt om å velge hvilken som skal brukes.
+
+Før du starter må Java 25, Maven 3.9.16 og enten Podman eller Docker være
+installert. Podman machine eller Docker Desktop må også være startet på
+Windows og macOS.
+
+Skriptet kontrollerer verktøyene og runtime-en, sjekker at port 8080 er ledig,
+kjører `mvn clean verify`, bygger imaget `localhost/workshop-reiseapp:dev` og
+starter containeren `workshop-reiseapp` i bakgrunnen. Hvis både Podman og
+Docker er installert, får du et valg i terminalen.
+
+Windows PowerShell:
+
+```powershell
+.\scripts\run-windows.ps1
+```
+
+Unix:
+
+```sh
+bash scripts/run-unix.sh
+```
+
+Runtime kan også velges direkte:
+
+```powershell
+.\scripts\run-windows.ps1 -Runtime podman
+```
+
+```sh
+bash scripts/run-unix.sh --runtime podman
+```
+
+Bytt `podman` med `docker` for å velge Docker direkte.
+
+Port 8080 brukes som standard. Velg en annen port slik:
+
+```powershell
+.\scripts\run-windows.ps1 -Port 9090
+```
+
+```sh
+bash scripts/run-unix.sh --port 9090
+```
+
+Containeren lytter fortsatt på port 8080 internt; parameteren endrer bare
+porten på vertsmaskinen.
+
+Skriptet starter containeren i bakgrunnen. Test med
+`curl http://localhost:8080/ping`, følg logger med `podman logs -f
+workshop-reiseapp` eller `docker logs -f workshop-reiseapp`, og stopp med
+`podman stop workshop-reiseapp` eller `docker stop workshop-reiseapp`.
+
+Stopp tjenesten gjennom skriptet:
+
+```powershell
+.\scripts\run-windows.ps1 -Stop
+```
+
+```sh
+bash scripts/run-unix.sh --stop
+```
+
+Når et run-skript startes på nytt, stopper det først en eksisterende
+`workshop-reiseapp`-container med valgt runtime. Du trenger derfor ikke å
+stoppe tjenesten manuelt før en ny build.
+
+Kjør skriptet på nytt etter kodeendringer. Det bygger prosjektet og imaget på
+nytt før containeren startes igjen.
+
 ## Kjør tjenesten
 
 Etter `mvn clean verify`, start tjenesten med JDK 25:
