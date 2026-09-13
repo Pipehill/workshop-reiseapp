@@ -78,6 +78,19 @@ API-nøkler eller tilgangskontroll med mindre det blir uttrykkelig bestilt.
 Spesifikasjonen er kilden til sannhet for API-kontrakten. Kodegenerering,
 kompilering og tester skal kunne kjøres fra en ren utsjekking i CI.
 
+## Commit-beskjeder
+
+- Start commit-beskjeder med et beskrivende prefiks i store bokstaver og
+  hakeparenteser, for eksempel `[FEATURE]`, `[BUGFIX]`, `[DOCS]`, `[REFACTOR]`,
+  `[TEST]` eller `[CI]`. Velg prefiks etter typen endring.
+- Følg prefikset med en kort, konkret beskrivelse av hva som er utført.
+  Ta med nok detaljer til at endringen er tydelig uten å måtte lese diffen.
+  Unngå vage beskrivelser som «oppdateringer» eller «fikser».
+- Bruk en kort utdyping i commit-teksten når det er nødvendig for å forklare
+  endringen eller hvorfor den ble gjort.
+
+Eksempel: `[DOCS] Dokumenter PostgreSQL-lagring og støtte for Podman og Docker`.
+
 ## Status og valg som gjenstår
 
 Prosjektet er i oppstartsfasen. Bygg, API-spesifikasjon, applikasjonskode og
