@@ -51,7 +51,7 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 
 Versjonsvalg kontrollert mot offisielle kilder 13. september 2026.
 Kodegenerering, kompilering og pakking av kontraktmodulen er verifisert på
-Windows med Java 25. Kjøring av server og containere er ennå ikke verifisert.
+Windows med Java 25. Containere er ennå ikke verifisert.
 
 | Teknologi | Valgt versjon | Begrunnelse og kilde |
 | --- | --- | --- |
@@ -151,10 +151,13 @@ Eksempel: `[DOCS] Dokumenter PostgreSQL-lagring og støtte for Podman og Docker`
 Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
 `spec/openapi.yaml` og modulen `api`. Modulen validerer kontrakten
 og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
-`GET /ping` er en minimal eksempelkontrakt uten serverimplementasjon.
+Modulen `service` implementerer `PingApi` og svarer med HTTP 200 og
+`{"message":"pong"}` på `GET /ping`. En HTTP-integrasjonstest starter
+Spring Boot på en tilfeldig port og kontrollerer responsen.
 Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
 
-Applikasjonsimplementasjon, database, containere og CI er foreløpig ikke opprettet.
+Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
+Database, containere og CI er foreløpig ikke opprettet.
 
 Teknologiversjoner og generator er valgt i tabellen over. Domeneendepunkter,
 containerbilder, Compose-provider og CI-actions er ennå ikke valgt.
