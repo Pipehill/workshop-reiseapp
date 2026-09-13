@@ -26,6 +26,8 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 - Koden skrives i Kotlin.
 - Backendrammeverket er Spring Boot.
 - Prosjektet bygges med Maven.
+- Maven skal installeres lokalt ved behov for bygg, og kjøres med `mvn`.
+  Ikke legg til Maven Wrapper.
 - API-ene utvikles spec first med OpenAPI.
 - Endepunkter og datamodeller spesifiseres i OpenAPI før de implementeres.
 - API-kode genereres fra spesifikasjonen som del av Maven-bygget.
@@ -48,8 +50,9 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 ### Valgte versjoner
 
 Versjonsvalg kontrollert mot offisielle kilder 13. september 2026.
-Dette er utgangspunktet for implementasjonen; kombinasjonen er ennå ikke
-verifisert gjennom kodegenerering, bygg eller kjøring.
+Kodegenerering, kompilering og pakking av kontraktmodulen er verifisert på
+Windows med Java 25. Containerkjøring er verifisert med Podman 6.0.2
+(Windows/WSL2, rootless), men ikke med Docker eller Compose.
 
 | Teknologi | Valgt versjon | Begrunnelse og kilde |
 | --- | --- | --- |
@@ -67,7 +70,7 @@ Spring Boot 4.1.1 støtter Java 25 og krever minst Kotlin 2.2.x.
 Se [systemkrav](https://docs.spring.io/spring-boot/system-requirements.html)
 og [Kotlin-støtte](https://docs.spring.io/spring-boot/reference/features/kotlin.html).
 Bruk Spring Boots dependency management for avhengigheter den forvalter,
-med Kotlin-versjonen over som eksplisitt valg. Verifiser dette i første bygg.
+med Kotlin-versjonen over som eksplisitt valg.
 
 OpenAPI 3.2.0 er nyeste spesifikasjon, men OpenAPI Generator oppgir støtte
 for 3.0 og beta-støtte for 3.1, uten å oppgi støtte for 3.2. Derfor velges
@@ -146,10 +149,41 @@ Eksempel: `[DOCS] Dokumenter PostgreSQL-lagring og støtte for Podman og Docker`
 
 ## Status og valg som gjenstår
 
-Prosjektet er i oppstartsfasen. Bygg, API-spesifikasjon, applikasjonskode og
-CI er foreløpig ikke opprettet.
+`scripts/install-windows.ps1` og `scripts/install-unix.sh` installerer lokale
+byggeverktøy og spør om Podman eller Docker. Begge har en planmodus uten
+endringer. Unix støtter macOS, Ubuntu, Debian og Fedora på x86_64/ARM64.
+Maven er låst til 3.9.16; JDK velges fra Temurin 25 LTS med tilgjengelig
+plattformpatch. Containerverktøy bruker stabile pakker fra pakkebehandlerne.
+Podman bruker Docker Compose på Windows og podman-compose på Unix.
+Eksisterende Docker beholder sin Compose-plugin, eller får Compose 5.5.1
+som reserve på Unix. Full installasjon på rene maskiner er ikke verifisert.
+Se README.md for forutsetninger, miljøvariabler og førstegangsoppsett.
 
-Teknologiversjoner og generator er valgt i tabellen over. Konkrete endepunkter,
-containerbilder, Compose-provider og CI-actions er ennå ikke valgt.
+Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
+`spec/openapi.yaml` og modulen `api`. Modulen validerer kontrakten
+og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
+Modulen `service` implementerer `PingApi` og svarer med HTTP 200 og
+`{"message":"pong"}` på `GET /ping`. En HTTP-integrasjonstest starter
+Spring Boot på en tilfeldig port og kontrollerer responsen.
+Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
+
+Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
+`service/Dockerfile` pakker Maven-byggets JAR i
+`docker.io/library/eclipse-temurin:25.0.4_7-jre-noble` (Linux JRE 25.0.4+7,
+Ubuntu 24.04 LTS). Denne eksplisitte Linux-image-taggen er valgt fra Temurins
+offisielle image-liste; lokal Windows-JDK er fortsatt 25.0.4.1+1.
+Bygg med `podman build -t localhost/workshop-reiseapp:dev ./service` eller
+tilsvarende `docker build`, etter `mvn clean verify`.
+Felles `compose.yaml` starter tjenesten med `podman compose up --build -d`
+eller `docker compose up --build -d`. Se README.md for forutsetninger,
+direkte kjøring uten Compose og nedstenging.
+Utvikleren har bygget imaget med Podman. Oppstart, HTTP 200 med pong fra
+Windows via localhost:8080 og nedstenging er verifisert med Podman 6.0.2
+i rootless-modus. Rootful-oppsettet på denne Windows/WSL2-maskinen videresendte
+ikke porten til Windows; bytte til rootless løste problemet. Se README.md.
+Docker og Compose-kjøring er ikke verifisert. Database og CI er ikke opprettet.
+
+Teknologiversjoner og generator er valgt i tabellen over. Domeneendepunkter,
+databaseimage, Compose-provider og CI-actions er ennå ikke valgt.
 Dokumenter de faktiske kommandoene for bygg, test og lokal kjøring når
 oppsettet er på plass, og verifiser versjonskombinasjonen da.
