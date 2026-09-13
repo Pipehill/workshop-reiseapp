@@ -26,6 +26,8 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 - Koden skrives i Kotlin.
 - Backendrammeverket er Spring Boot.
 - Prosjektet bygges med Maven.
+- Maven skal installeres lokalt ved behov for bygg, og kjøres med `mvn`.
+  Ikke legg til Maven Wrapper.
 - API-ene utvikles spec first med OpenAPI.
 - Endepunkter og datamodeller spesifiseres i OpenAPI før de implementeres.
 - API-kode genereres fra spesifikasjonen som del av Maven-bygget.
@@ -48,8 +50,8 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 ### Valgte versjoner
 
 Versjonsvalg kontrollert mot offisielle kilder 13. september 2026.
-Dette er utgangspunktet for implementasjonen; kombinasjonen er ennå ikke
-verifisert gjennom kodegenerering, bygg eller kjøring.
+Kodegenerering, kompilering og pakking av kontraktmodulen er verifisert på
+Windows med Java 25. Kjøring av server og containere er ennå ikke verifisert.
 
 | Teknologi | Valgt versjon | Begrunnelse og kilde |
 | --- | --- | --- |
@@ -67,7 +69,7 @@ Spring Boot 4.1.1 støtter Java 25 og krever minst Kotlin 2.2.x.
 Se [systemkrav](https://docs.spring.io/spring-boot/system-requirements.html)
 og [Kotlin-støtte](https://docs.spring.io/spring-boot/reference/features/kotlin.html).
 Bruk Spring Boots dependency management for avhengigheter den forvalter,
-med Kotlin-versjonen over som eksplisitt valg. Verifiser dette i første bygg.
+med Kotlin-versjonen over som eksplisitt valg.
 
 OpenAPI 3.2.0 er nyeste spesifikasjon, men OpenAPI Generator oppgir støtte
 for 3.0 og beta-støtte for 3.1, uten å oppgi støtte for 3.2. Derfor velges
@@ -146,10 +148,15 @@ Eksempel: `[DOCS] Dokumenter PostgreSQL-lagring og støtte for Podman og Docker`
 
 ## Status og valg som gjenstår
 
-Prosjektet er i oppstartsfasen. Bygg, API-spesifikasjon, applikasjonskode og
-CI er foreløpig ikke opprettet.
+Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
+`spec/openapi.yaml` og modulen `api`. Modulen validerer kontrakten
+og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
+`GET /ping` er en minimal eksempelkontrakt uten serverimplementasjon.
+Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
 
-Teknologiversjoner og generator er valgt i tabellen over. Konkrete endepunkter,
+Applikasjonsimplementasjon, database, containere og CI er foreløpig ikke opprettet.
+
+Teknologiversjoner og generator er valgt i tabellen over. Domeneendepunkter,
 containerbilder, Compose-provider og CI-actions er ennå ikke valgt.
 Dokumenter de faktiske kommandoene for bygg, test og lokal kjøring når
 oppsettet er på plass, og verifiser versjonskombinasjonen da.
