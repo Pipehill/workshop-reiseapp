@@ -1,4 +1,4 @@
-# workshop-reiseapp
+# Workshop: Reiseapp
 
 Backend til en fiktiv reiseapp for opplæring og workshops i API-integrasjon.
 Prosjektet skal bruke Kotlin, Maven og OpenAPI med spec first og kodegenerering.
