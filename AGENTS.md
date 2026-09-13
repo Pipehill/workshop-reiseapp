@@ -149,6 +149,16 @@ Eksempel: `[DOCS] Dokumenter PostgreSQL-lagring og støtte for Podman og Docker`
 
 ## Status og valg som gjenstår
 
+`scripts/install-windows.ps1` og `scripts/install-unix.sh` installerer lokale
+byggeverktøy og spør om Podman eller Docker. Begge har en planmodus uten
+endringer. Unix støtter macOS, Ubuntu, Debian og Fedora på x86_64/ARM64.
+Maven er låst til 3.9.16; JDK velges fra Temurin 25 LTS med tilgjengelig
+plattformpatch. Containerverktøy bruker stabile pakker fra pakkebehandlerne.
+Podman bruker Docker Compose på Windows og podman-compose på Unix.
+Eksisterende Docker beholder sin Compose-plugin, eller får Compose 5.5.1
+som reserve på Unix. Full installasjon på rene maskiner er ikke verifisert.
+Se README.md for forutsetninger, miljøvariabler og førstegangsoppsett.
+
 Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
 `spec/openapi.yaml` og modulen `api`. Modulen validerer kontrakten
 og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.

@@ -2,7 +2,7 @@ openapi: 3.0.4
 info:
   title: Reiseapp API
   version: 0.1.0
-  description: API-kontrakt for workshop-reiseappen.
+  description: API-kontrakt for reiseappen.
 tags:
   - name: Ping
     description: Enkel kontrakt for å verifisere prosjektoppsettet.

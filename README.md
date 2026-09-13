@@ -19,6 +19,85 @@ minimalt eksempel. Tjenesten svarer med `{"message":"pong"}` og HTTP 200.
 
 ## Bygg
 
+### Installer avhengigheter
+
+Skriptene spør om du vil bruke **Podman** (anbefalt) eller **Docker**.
+De installerer JDK 25, Maven 3.9.16 og valgt containerverktøy med Compose-støtte.
+Kotlin, Spring Boot og kodegeneratoren lastes ned av Maven under bygg;
+PostgreSQL skal senere kjøres som container og installeres ikke på vertsmaskinen.
+
+Windows, i PowerShell fra prosjektroten:
+
+```powershell
+.\scripts\install-windows.ps1
+```
+
+Krever PowerShell 5.1+ og WinGet (App Installer fra Microsoft Store).
+Installasjonsprogrammene kan be om administratorrettigheter.
+Hvis din lokale PowerShell-policy blokkerer skriptet, kan du kjøre det med
+`powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1`;
+dette gjelder bare denne prosessen.
+
+Unix, i terminalen fra prosjektroten:
+
+```sh
+bash scripts/install-unix.sh
+```
+
+Støtter macOS med Homebrew, Ubuntu, Debian og Fedora, på x86_64 og ARM64.
+Andre Unix-systemer stopper med en forklaring. Kjør som vanlig bruker;
+Linux-skriptet bruker `sudo` når det installerer systempakker.
+
+For å se planen uten installasjon:
+
+```powershell
+.\scripts\install-windows.ps1 -Plan
+```
+
+```sh
+bash scripts/install-unix.sh --plan
+```
+
+Valget kan også gis direkte med `-ContainerRuntime podman` på Windows eller
+`--runtime podman` på Unix (bruk `docker` for Docker).
+
+Windows bruker WinGet for Temurin 25 og containerverktøy. Maven installeres
+i `%LOCALAPPDATA%\workshop-reiseapp\tools`; brukerens `JAVA_HOME` og `PATH`
+oppdateres. Åpne en ny terminal etter installasjon.
+
+Unix installerer Temurin 25 og Maven under `~/.local/share/workshop-reiseapp/tools`.
+Aktiver dem i terminalen med:
+
+```sh
+source ~/.local/share/workshop-reiseapp/tools/env.sh
+```
+
+Gjenta dette i nye terminaler, eller legg linjen i din Bash/Zsh-profil.
+Homebrew/distribusjonens pakkebehandler brukes for Podman. Docker installeres
+fra Docker Desktop på macOS og Dockers stabile pakkearkiv på Linux.
+Eksisterende containerinstallasjoner beholdes. Manglende Compose legges til;
+Unix bruker offisiell Compose 5.5.1 som reserve for eksisterende Docker.
+
+Nyinstallasjoner bruker tilgjengelig stabil containerpakke fra pakkekilden
+og siste Temurin 25-patch for plattformen. På Linux kan distribusjonens
+Podman-versjon være eldre enn referanseversjonen i AGENTS.md. Maven er låst
+til 3.9.16. Java/Maven-arkiver og eventuell separat Compose-binær kontrolleres
+med sjekksummer før installasjon. Nedlastingene beholdes i `tools/downloads`.
+
+Følg skriptets sluttmelding for WSL2, Podman-maskin eller førstegangsoppsett
+av Docker Desktop. Skriptene starter ikke containere eller endrer eksisterende
+Podman-maskiner. WSL2 kan kreve separat aktivering og omstart av Windows.
+
+Syntaks og forhåndsvisning er kontrollert på Windows, Linux/Fedora og med
+simulert macOS-plattform. Full installasjon er ikke testet på rene maskiner.
+
+Installasjonskilder: [Adoptium](https://adoptium.net/installation/),
+[Maven](https://maven.apache.org/download.cgi),
+[Docker for Ubuntu](https://docs.docker.com/engine/install/ubuntu/) og
+[Docker for Fedora](https://docs.docker.com/engine/install/fedora/).
+
+### Bygg prosjektet
+
 Installer JDK 25 og Maven 3.9.16. Sett `JAVA_HOME` til JDK-installasjonen og
 legg Maven i `PATH`, slik at `mvn` er tilgjengelig. Første bygg krever
 internettilgang for nedlasting av avhengigheter.
