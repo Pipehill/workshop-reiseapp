@@ -177,6 +177,11 @@ tilsvarende `docker build`, etter `mvn clean verify`.
 Felles `compose.yaml` starter tjenesten med `podman compose up --build -d`
 eller `docker compose up --build -d`. Se README.md for forutsetninger,
 direkte kjøring uten Compose og nedstenging.
+`scripts/run-windows.ps1` og `scripts/run-unix.sh` tilbyr en samlet lokal
+oppstart: preflight-sjekk, `mvn clean verify`, image-bygging og start av
+containeren i bakgrunnen. Begge spør om Podman eller Docker når begge finnes,
+eller kan få runtime eksplisitt som argument. Begge støtter valgfri host-port,
+eksplisitt stopp og stopper en eksisterende container før ny build/start.
 Utvikleren har bygget imaget med Podman. Oppstart, HTTP 200 med pong fra
 Windows via localhost:8080 og nedstenging er verifisert med Podman 6.0.2
 i rootless-modus. Rootful-oppsettet på denne Windows/WSL2-maskinen videresendte
