@@ -51,7 +51,8 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 
 Versjonsvalg kontrollert mot offisielle kilder 13. september 2026.
 Kodegenerering, kompilering og pakking av kontraktmodulen er verifisert på
-Windows med Java 25. Containere er ennå ikke verifisert.
+Windows med Java 25. Containerkjøring er verifisert med Podman 6.0.2
+(Windows/WSL2, rootless), men ikke med Docker eller Compose.
 
 | Teknologi | Valgt versjon | Begrunnelse og kilde |
 | --- | --- | --- |
@@ -157,9 +158,22 @@ Spring Boot på en tilfeldig port og kontrollerer responsen.
 Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
 
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
-Database, containere og CI er foreløpig ikke opprettet.
+`service/Dockerfile` pakker Maven-byggets JAR i
+`docker.io/library/eclipse-temurin:25.0.4_7-jre-noble` (Linux JRE 25.0.4+7,
+Ubuntu 24.04 LTS). Denne eksplisitte Linux-image-taggen er valgt fra Temurins
+offisielle image-liste; lokal Windows-JDK er fortsatt 25.0.4.1+1.
+Bygg med `podman build -t localhost/workshop-reiseapp:dev ./service` eller
+tilsvarende `docker build`, etter `mvn clean verify`.
+Felles `compose.yaml` starter tjenesten med `podman compose up --build -d`
+eller `docker compose up --build -d`. Se README.md for forutsetninger,
+direkte kjøring uten Compose og nedstenging.
+Utvikleren har bygget imaget med Podman. Oppstart, HTTP 200 med pong fra
+Windows via localhost:8080 og nedstenging er verifisert med Podman 6.0.2
+i rootless-modus. Rootful-oppsettet på denne Windows/WSL2-maskinen videresendte
+ikke porten til Windows; bytte til rootless løste problemet. Se README.md.
+Docker og Compose-kjøring er ikke verifisert. Database og CI er ikke opprettet.
 
 Teknologiversjoner og generator er valgt i tabellen over. Domeneendepunkter,
-containerbilder, Compose-provider og CI-actions er ennå ikke valgt.
+databaseimage, Compose-provider og CI-actions er ennå ikke valgt.
 Dokumenter de faktiske kommandoene for bygg, test og lokal kjøring når
 oppsettet er på plass, og verifiser versjonskombinasjonen da.

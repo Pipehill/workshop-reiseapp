@@ -65,3 +65,90 @@ eller kjør `curl http://localhost:8080/ping`. Forventet svar:
 ```
 
 Ingen autentisering eller database kreves. Stopp tjenesten med Ctrl+C.
+
+## Kjør med Podman eller Docker
+
+Installer Podman (foretrukket) eller Docker med støtte for Linux-containere.
+På Windows/macOS må Podman-maskinen være startet (`podman machine start`;
+kjør `podman machine init` først hvis du ikke har opprettet en maskin).
+Ved bruk av Docker Desktop må denne være startet og bruke Linux-containere.
+
+Bygg først JAR-filen med lokalt installert JDK 25 og Maven:
+
+```sh
+mvn clean verify
+```
+
+`service/Dockerfile` pakker JAR-filen i et Linux-image og kjører Java som
+en bruker uten root-tilgang. Bygget bruker Temurin JRE 25.0.4+7 på Ubuntu
+24.04 LTS (`25.0.4_7-jre-noble`), en eksplisitt tag fra
+[Temurins offisielle image-liste](https://github.com/docker-library/official-images/blob/master/library/eclipse-temurin).
+Containerens Linux-runtime er dermed 25.0.4+7; den lokale Windows-JDK-en er
+25.0.4.1+1. Ingen Jib-plugin er nødvendig.
+
+Alle kommandoene nedenfor kjøres fra prosjektroten. Velg enten Podman
+eller Docker for bygg og kjøring; de har separate lokale image-lagre.
+
+### Direkte med Podman
+
+```sh
+podman build -t localhost/workshop-reiseapp:dev ./service
+podman run --rm --name workshop-reiseapp -p 127.0.0.1:8080:8080 localhost/workshop-reiseapp:dev
+```
+
+### Direkte med Docker
+
+```sh
+docker build -t localhost/workshop-reiseapp:dev ./service
+docker run --rm --name workshop-reiseapp -p 127.0.0.1:8080:8080 localhost/workshop-reiseapp:dev
+```
+
+Åpne `http://localhost:8080/ping` og kontroller at svaret er
+`{"message":"pong"}`. Stopp med Ctrl+C eller, fra en annen terminal,
+`podman stop -t 30 workshop-reiseapp` / `docker stop -t 30 workshop-reiseapp`.
+`--rm` fjerner containeren når den stopper. Image-et beholdes.
+
+### Med Compose
+
+Den samme `compose.yaml` brukes med begge verktøy. Docker trenger Compose-pluginen.
+`podman compose` trenger en ekstern Compose-provider, for eksempel
+`podman-compose` eller Docker Compose. Se [Podmans dokumentasjon](https://docs.podman.io/en/latest/markdown/podman-compose.1.html).
+Direktekommandoene over krever ingen Compose-provider.
+
+| Handling | Podman | Docker |
+| --- | --- | --- |
+| Kontroller oppsett | `podman compose config` | `docker compose config` |
+| Bygg image og start | `podman compose up --build -d` | `docker compose up --build -d` |
+| Se logger | `podman compose logs -f service` | `docker compose logs -f service` |
+| Stopp og fjern containere/nettverk | `podman compose down` | `docker compose down` |
+
+Port 8080 må være ledig; stopp eventuell tidligere lokal kjøring først.
+Ved kodeendringer kjøres `mvn clean verify` før containerbildet bygges på nytt.
+Compose bygger bare containerbildet, ikke Kotlin-koden.
+
+Oppsettet starter foreløpig bare tjenesten, som ikke bruker database.
+Databasevolum og reset legges til sammen med PostgreSQL-integrasjonen.
+Containerbildet er bygget med Podman av utvikleren. Oppstart, HTTP-kall fra
+Windows og nedstenging er verifisert med Podman 6.0.2 i rootless-modus på WSL2.
+Docker og Compose-kjøring er ennå ikke verifisert.
+
+### Windows: connection refused på localhost
+
+På den testede maskinen svarte API-et inne i Podman-maskinen, men porten
+var utilgjengelig fra Windows i rootful-modus. Bytte til rootless løste dette.
+Hvis du opplever samme problem, sjekk først `podman ps`, `podman port <navn>`
+og `podman logs <navn>` for å bekrefte oppstart og portkobling.
+
+Rootless kan velges ved opprettelse av Podman-maskinen. En eksisterende maskin
+kan byttes med kommandoene under (erstatt `<maskinnavn>` med navnet fra
+`podman machine list`). Stopp containerne først:
+
+```sh
+podman machine stop <maskinnavn>
+podman machine set --rootful=false <maskinnavn>
+podman machine start <maskinnavn>
+```
+
+Rootful og rootless har separate image- og volumlagre. Data slettes ikke ved
+byttet, men bygg app-imaget på nytt i rootless-modus før oppstart.
+Dette endrer Podman-maskinen lokalt; Dockerfile og Compose-filen er uendret.

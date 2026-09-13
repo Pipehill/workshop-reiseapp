@@ -1,0 +1,9 @@
+services:
+  service:
+    build:
+      context: ./service
+      dockerfile: Dockerfile
+    image: localhost/workshop-reiseapp:dev
+    ports:
+      - "127.0.0.1:8080:8080"
+    stop_grace_period: 30s
