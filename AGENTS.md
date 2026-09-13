@@ -24,12 +24,65 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 ## Fastlagte tekniske føringer
 
 - Koden skrives i Kotlin.
+- Backendrammeverket er Spring Boot.
 - Prosjektet bygges med Maven.
 - API-ene utvikles spec first med OpenAPI.
 - Endepunkter og datamodeller spesifiseres i OpenAPI før de implementeres.
 - API-kode genereres fra spesifikasjonen som del av Maven-bygget.
 - Koden skal ligge på GitHub.
 - GitHub Actions skal bygge og teste koden for hver pull request.
+
+## Versjoner av rammeverk og avhengigheter
+
+- Bruk nyeste stabile versjoner av rammeverk, avhengigheter og verktøy med
+  mindre annet er uttrykkelig spesifisert.
+- Dersom en komponent tilbyr LTS (Long-Term Support), foretrekk nyeste
+  støttede LTS-versjon med siste tilgjengelige patch fremfor nyere versjoner
+  uten LTS.
+- Verifiser tilgjengelige versjoner og kompatibilitet mot offisielle kilder
+  når versjoner velges eller oppdateres. Dokumenter eventuelle avvik som
+  er nødvendige av hensyn til kompatibilitet.
+- Lås valgte versjoner i bygg- og containeroppsettet for repeterbare bygg;
+  ikke bruk flytende `latest`-referanser.
+
+### Valgte versjoner
+
+Versjonsvalg kontrollert mot offisielle kilder 13. september 2026.
+Dette er utgangspunktet for implementasjonen; kombinasjonen er ennå ikke
+verifisert gjennom kodegenerering, bygg eller kjøring.
+
+| Teknologi | Valgt versjon | Begrunnelse og kilde |
+| --- | --- | --- |
+| JDK (Eclipse Temurin) | 25.0.4.1+1, Java 25 LTS | Nyeste patch i valgt LTS-linje. [Utgivelse](https://github.com/adoptium/temurin25-binaries/releases/tag/jdk-25.0.4.1+1) og [LTS-støtte](https://adoptium.net/support/). |
+| Kotlin | 2.4.20 | Nyeste stabile utgivelse. Bruk samme versjon for kompilator, Maven-plugin og Kotlin-biblioteker. [Utgivelser](https://kotlinlang.org/docs/releases.html). |
+| Spring Boot | 4.1.1 | Nyeste stabile utgivelse; ingen kommersiell støtteavtale forutsettes. [Utgivelse](https://github.com/spring-projects/spring-boot/releases/tag/v4.1.1). |
+| Maven | 3.9.16 | Nyeste stabile utgivelse; 3.10 og 4.0 er foreløpig forhåndsversjoner. [Nedlasting](https://maven.apache.org/download.cgi). |
+| PostgreSQL | 18.6 | Nyeste stabile hovedversjon med siste vedlikeholdsutgivelse. PostgreSQL gir fem års støtte per hovedversjon, uten egen LTS-linje. [Versjonspolicy](https://www.postgresql.org/support/versioning/). |
+| OpenAPI-spesifikasjon | 3.0.4 | Bevisst kompatibilitetsunntak for kodegenerering, se nedenfor. [Spesifikasjon](https://spec.openapis.org/oas/v3.0.4.html). |
+| OpenAPI Generator Maven Plugin | 7.25.0 | Nyeste stabile utgivelse. Velg generatoren `kotlin-spring`. [Utgivelse](https://github.com/OpenAPITools/openapi-generator/releases/tag/v7.25.0). |
+| Podman | 6.1.1 | Foretrukket referanseversjon for lokal kjøring. [Utgivelse](https://github.com/podman-container-tools/podman/releases/tag/v6.1.1). |
+| Docker Engine | 29.8.0 | Alternativ referanseversjon for lokal kjøring. Dette er Engine-versjonen, ikke Docker Desktop-versjonen. [Utgivelsesnotater](https://docs.docker.com/engine/release-notes/29/). |
+
+Spring Boot 4.1.1 støtter Java 25 og krever minst Kotlin 2.2.x.
+Se [systemkrav](https://docs.spring.io/spring-boot/system-requirements.html)
+og [Kotlin-støtte](https://docs.spring.io/spring-boot/reference/features/kotlin.html).
+Bruk Spring Boots dependency management for avhengigheter den forvalter,
+med Kotlin-versjonen over som eksplisitt valg. Verifiser dette i første bygg.
+
+OpenAPI 3.2.0 er nyeste spesifikasjon, men OpenAPI Generator oppgir støtte
+for 3.0 og beta-støtte for 3.1, uten å oppgi støtte for 3.2. Derfor velges
+3.0.4 for dette prosjektet. Se [spesifikasjonsversjoner](https://spec.openapis.org/oas/)
+og [generatorens kompatibilitet](https://github.com/OpenAPITools/openapi-generator/tree/v7.25.0#11---compatibility).
+Konfigurer `kotlin-spring` for Spring Boot 4 med `useSpringBoot4=true`;
+se [generatorens dokumentasjon](https://openapi-generator.tech/docs/generators/kotlin-spring/).
+
+Podman og Docker-versjonene er referanser for implementasjon og testing,
+ikke et krav om at deltakere har nøyaktig samme patchversjon. Dokumenter
+faktisk verifisert kompatibilitet når containeroppsettet er på plass.
+
+GitHub og GitHub Actions brukes som tjenester og har ingen prosjektstyrt
+produktversjon. Konkrete actions og eventuell Compose-provider velges og
+låses når CI- og containeroppsettet lages.
 
 ## Autentisering og autorisering
 
@@ -96,7 +149,7 @@ Eksempel: `[DOCS] Dokumenter PostgreSQL-lagring og støtte for Podman og Docker`
 Prosjektet er i oppstartsfasen. Bygg, API-spesifikasjon, applikasjonskode og
 CI er foreløpig ikke opprettet.
 
-Backendrammeverk, JDK- og Kotlin-versjon, PostgreSQL-versjon, OpenAPI-versjon,
-generator og konkrete endepunkter er ennå ikke valgt. Ikke behandle
-eksempler eller forslag som vedtatte valg. Dokumenter valgene og de faktiske
-kommandoene for bygg, test og lokal kjøring når oppsettet er på plass.
+Teknologiversjoner og generator er valgt i tabellen over. Konkrete endepunkter,
+containerbilder, Compose-provider og CI-actions er ennå ikke valgt.
+Dokumenter de faktiske kommandoene for bygg, test og lokal kjøring når
+oppsettet er på plass, og verifiser versjonskombinasjonen da.
