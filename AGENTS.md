@@ -65,6 +65,7 @@ med Docker Engine.
 | PostgreSQL | 18.6 | Nyeste stabile hovedversjon med siste vedlikeholdsutgivelse. PostgreSQL gir fem års støtte per hovedversjon, uten egen LTS-linje. [Versjonspolicy](https://www.postgresql.org/support/versioning/). |
 | Flyway | 12.4.0 | Versjonen forvaltes av Spring Boot 4.1.1. PostgreSQL 18 er støttet, og `flyway-database-postgresql` brukes som separat databasemodul. [Spring Boot dependency management](https://docs.spring.io/spring-boot/appendix/dependency-versions/coordinates.html) og [Flyway PostgreSQL-støtte](https://documentation.red-gate.com/flyway/reference/database-driver-reference/postgresql-database). |
 | PostgreSQL JDBC | 42.7.13 | Nyeste stabile JDBC-driver, forvaltet av Spring Boot 4.1.1. [pgJDBC-nedlasting](https://jdbc.postgresql.org/download/). |
+| Spring Data JPA | 4.1.1 | Versjonen forvaltes av Spring Boot 4.1.1. Repositoryspørringer deklareres med JPQL og `@Query`. [Query methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html). |
 | OpenAPI-spesifikasjon | 3.0.4 | Bevisst kompatibilitetsunntak for kodegenerering, se nedenfor. [Spesifikasjon](https://spec.openapis.org/oas/v3.0.4.html). |
 | OpenAPI Generator Maven Plugin | 7.25.0 | Nyeste stabile utgivelse. Velg generatoren `kotlin-spring`. [Utgivelse](https://github.com/OpenAPITools/openapi-generator/releases/tag/v7.25.0). |
 | Podman | 6.1.1 | Foretrukket referanseversjon for lokal kjøring. [Utgivelse](https://github.com/podman-container-tools/podman/releases/tag/v6.1.1). |
@@ -169,17 +170,29 @@ og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
 Modulen `service` implementerer `PingApi` og svarer med HTTP 200 og
 `{"message":"pong"}` på `GET /ping`. En HTTP-integrasjonstest starter
 Spring Boot på en tilfeldig port og kontrollerer responsen. Testen deaktiverer
-JDBC- og Flyway-autokonfigurasjon og trenger derfor ikke en ekstern database.
+JDBC- og Flyway-autokonfigurasjon og bruker en testlokal `PersonRepository`-mock,
+og trenger derfor ikke en ekstern database.
 Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
 
-`service` bruker Spring JDBC, Flyway 12.4.0, PostgreSQL-modulen for Flyway og
-PostgreSQL JDBC 42.7.13. `V1__create_person_table.sql` oppretter tabellen
+`service` bruker Spring Data JPA, Flyway 12.4.0, PostgreSQL-modulen for Flyway
+og PostgreSQL JDBC 42.7.13. `V1__create_person_table.sql` oppretter tabellen
 `person` med identity-ID, navn, avdeling, e-post, telefonnummer, kjønn og
 registreringsdato. Tekstfeltene er påkrevde og kan ikke være blanke; e-post er
 unik uavhengig av store/små bokstaver. `V2__seed_person_table.sql` legger inn
 ti deterministiske, fiktive personer. Flyway kjører seedingen bare ved første
 initialisering, slik at vanlig omstart ikke overskriver, gjenoppretter eller
 dupliserer data. Reset av databasevolumet gjenoppretter de opprinnelige dataene.
+
+`Person` er både personmodell og JPA-entitet. `PersonRepository` arver
+`JpaRepository`; `save` legger til personer, mens `findPersonById` og `findAll`
+bruker JPQL deklarert med `@Query`. Kotlin-kompileringen bruker `spring`- og
+`jpa`-pluginene for proxybare Spring-klasser og JPA-kompatible entiteter.
+Hibernate bruker `ddl-auto=validate`, mens Flyway alene eier skjemaendringer.
+Open EntityManager in View er deaktivert.
+Repository-integrasjonstestene krever en eksplisitt, separat PostgreSQL-
+testdatabase gjennom miljøvariablene `REISEAPP_TEST_DATABASE_URL`,
+`REISEAPP_TEST_DATABASE_USER` og `REISEAPP_TEST_DATABASE_PASSWORD`; ellers
+hoppes de over. Testene er verifisert mot en isolert PostgreSQL 18.6-database.
 
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
 `service/Dockerfile` pakker Maven-byggets JAR i
