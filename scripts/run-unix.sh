@@ -138,6 +138,6 @@ export REISEAPP_DATABASE_PORT="$database_port"
 echo "Building and starting the application and PostgreSQL with $runtime Compose ..."
 "$runtime" compose up --build -d
 
-echo "The service is running at http://localhost:$port/ping"
+echo "The service is running at http://localhost:$port/health"
 echo "PostgreSQL is available at localhost:$database_port (database: ${REISEAPP_DATABASE_NAME:-reiseapp}, user: ${REISEAPP_DATABASE_USER:-reiseapp})."
 echo "Logs: $runtime compose logs -f"

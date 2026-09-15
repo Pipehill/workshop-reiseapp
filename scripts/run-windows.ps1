@@ -106,6 +106,6 @@ $databaseUser = if ([string]::IsNullOrWhiteSpace($env:REISEAPP_DATABASE_USER)) {
 Write-Host "Building and starting the application and PostgreSQL with $ContainerRuntime Compose ..."
 Invoke-Compose -ComposeArguments @('up', '--build', '-d')
 
-Write-Host "The service is running at http://localhost:$Port/ping"
+Write-Host "The service is running at http://localhost:$Port/health"
 Write-Host "PostgreSQL is available at localhost:$DatabasePort (database: $databaseName, user: $databaseUser)."
 Write-Host "Logs: $ContainerRuntime compose logs -f"

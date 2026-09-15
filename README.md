@@ -15,7 +15,7 @@ før de gjør endringer i prosjektet.
 - `service/`: kjørbar Spring Boot-tjeneste som implementerer API-grensesnittene.
 - `service/src/main/resources/db/migration/`: versjonerte Flyway-migreringer.
 
-Kontrakten inneholder `GET /ping` samt endepunkter for å opprette og hente
+Kontrakten inneholder `GET /health` samt endepunkter for å opprette og hente
 personer. API-grensesnitt og DTO-er genereres fra kontrakten.
 
 ## Bygg
@@ -126,7 +126,7 @@ eller sjekkes inn. Bruk `clean verify` etter sletting eller omdøping av
 endepunkter/modeller slik at gamle genererte filer fjernes.
 
 `verify` kontrollerer validering, generering, kompilering og pakking. HTTP-
-testene starter tjenesten på tilfeldige porter og verifiserer `/ping` samt
+testene starter tjenesten på tilfeldige porter og verifiserer `/health` samt
 uthenting, oppretting, validering og ikke-funnet-respons for personendepunktene.
 
 Repository-integrasjonstestene aktiveres når `REISEAPP_TEST_DATABASE_URL`,
@@ -192,7 +192,7 @@ annen databaseport med `-DatabasePort 55432` på Windows eller
 `--database-port 55432` på Unix.
 
 Skriptet starter begge containerne i bakgrunnen. Test API-et med
-`curl http://localhost:8080/ping`, og følg alle logger med
+`curl http://localhost:8080/health`, og følg alle logger med
 `podman compose logs -f` eller `docker compose logs -f`.
 
 Stopp tjenesten og databasen gjennom skriptet:
@@ -238,12 +238,16 @@ SPRING_DATASOURCE_PASSWORD=reiseapp-local \
 java -jar service/target/service-0.1.0-SNAPSHOT.jar
 ```
 
-Tjenesten lytter på port 8080. Åpne `http://localhost:8080/ping` i en nettleser
-eller kjør `curl http://localhost:8080/ping`. Forventet svar:
+Tjenesten lytter på port 8080. Åpne `http://localhost:8080/health` i en nettleser
+eller kjør `curl http://localhost:8080/health`. Forventet svar med HTTP 200:
 
 ```json
-{"message":"pong"}
+{"status":"UP"}
 ```
+
+`/health` er en livssjekk som bekrefter at API-et kan svare. Den kontrollerer
+ikke databasetilkoblingen; PostgreSQL-containeren har sin egen helsesjekk.
+Det tidligere `/ping`-endepunktet er fjernet og gir HTTP 404.
 
 Ved oppstart kobler tjenesten til databasen og kjører ventende Flyway-migreringer.
 Den direkte kommandoen starter ikke PostgreSQL-containeren. Stopp tjenesten med
@@ -298,8 +302,8 @@ docker build -t localhost/workshop-reiseapp:dev ./service
 docker run --rm --name workshop-reiseapp -p 127.0.0.1:8080:8080 localhost/workshop-reiseapp:dev
 ```
 
-Åpne `http://localhost:8080/ping` og kontroller at svaret er
-`{"message":"pong"}`. Stopp med Ctrl+C eller, fra en annen terminal,
+Åpne `http://localhost:8080/health` og kontroller at svaret er
+`{"status":"UP"}`. Stopp med Ctrl+C eller, fra en annen terminal,
 `podman stop -t 30 workshop-reiseapp` / `docker stop -t 30 workshop-reiseapp`.
 `--rm` fjerner containeren når den stopper. Image-et beholdes.
 
