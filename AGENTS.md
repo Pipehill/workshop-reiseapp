@@ -51,8 +51,9 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 
 Versjonsvalg kontrollert mot offisielle kilder 13. september 2026.
 Kodegenerering, kompilering og pakking av kontraktmodulen er verifisert på
-Windows med Java 25. Containerkjøring er verifisert med Podman 6.0.2
-(Windows/WSL2, rootless), men ikke med Docker eller Compose.
+Windows med Java 25. Container- og Compose-kjøring er verifisert med Podman
+6.0.2 (Windows/WSL2, rootless) og Docker Compose 5.5.1 som provider, men ikke
+med Docker Engine.
 
 | Teknologi | Valgt versjon | Begrunnelse og kilde |
 | --- | --- | --- |
@@ -174,21 +175,30 @@ Ubuntu 24.04 LTS). Denne eksplisitte Linux-image-taggen er valgt fra Temurins
 offisielle image-liste; lokal Windows-JDK er fortsatt 25.0.4.1+1.
 Bygg med `podman build -t localhost/workshop-reiseapp:dev ./service` eller
 tilsvarende `docker build`, etter `mvn clean verify`.
-Felles `compose.yaml` starter tjenesten med `podman compose up --build -d`
-eller `docker compose up --build -d`. Se README.md for forutsetninger,
-direkte kjøring uten Compose og nedstenging.
+Felles `compose.yaml` starter tjenesten og PostgreSQL 18.6 i separate containere
+med `podman compose up --build -d` eller `docker compose up --build -d`.
+Databaseimaget er låst til `docker.io/library/postgres:18.6-trixie`. Et navngitt
+volum montert på `/var/lib/postgresql` bevarer data. Databasen eksponeres bare
+på localhost og har en helsesjekk som tjenesten venter på. Se README.md for
+konfigurasjon, direkte kjøring uten Compose, nedstenging og eksplisitt reset.
 `scripts/run-windows.ps1` og `scripts/run-unix.sh` tilbyr en samlet lokal
-oppstart: preflight-sjekk, `mvn clean verify`, image-bygging og start av
-containeren i bakgrunnen. Begge spør om Podman eller Docker når begge finnes,
-eller kan få runtime eksplisitt som argument. Begge støtter valgfri host-port,
-eksplisitt stopp og stopper en eksisterende container før ny build/start.
+oppstart: preflight-sjekk, `mvn clean verify`, Compose-bygging og start av begge
+containerne i bakgrunnen. Begge spør om Podman eller Docker når begge finnes,
+eller kan få runtime eksplisitt som argument. Begge støtter valgfrie host-porter,
+eksplisitt stopp med bevaring av databasevolumet og stopper et eksisterende
+Compose-oppsett før ny build/start.
 Utvikleren har bygget imaget med Podman. Oppstart, HTTP 200 med pong fra
 Windows via localhost:8080 og nedstenging er verifisert med Podman 6.0.2
 i rootless-modus. Rootful-oppsettet på denne Windows/WSL2-maskinen videresendte
 ikke porten til Windows; bytte til rootless løste problemet. Se README.md.
-Docker og Compose-kjøring er ikke verifisert. Database og CI er ikke opprettet.
+PostgreSQL-imaget er verifisert separat med oppstart, readiness, SQL og bevaring
+av data gjennom ny container mot PostgreSQL 18.6 med Podman 6.0.2. Det samlede
+Compose-oppsettet er verifisert med Docker Compose 5.5.1 som Podman-provider:
+bygg og test, image-bygging, databasehelse, HTTP, SQL, stopp med bevart volum og
+gjenoppstart med bevarte data. Docker Engine er ikke verifisert. Databaseskjema
+og CI er ikke opprettet.
 
-Teknologiversjoner og generator er valgt i tabellen over. Domeneendepunkter,
-databaseimage, Compose-provider og CI-actions er ennå ikke valgt.
+Teknologiversjoner og generator er valgt i tabellen over. Domeneendepunkter og
+CI-actions er ennå ikke valgt.
 Dokumenter de faktiske kommandoene for bygg, test og lokal kjøring når
 oppsettet er på plass, og verifiser versjonskombinasjonen da.

@@ -24,7 +24,7 @@ minimalt eksempel. Tjenesten svarer med `{"message":"pong"}` og HTTP 200.
 Skriptene spør om du vil bruke **Podman** (anbefalt) eller **Docker**.
 De installerer JDK 25, Maven 3.9.16 og valgt containerverktøy med Compose-støtte.
 Kotlin, Spring Boot og kodegeneratoren lastes ned av Maven under bygg;
-PostgreSQL skal senere kjøres som container og installeres ikke på vertsmaskinen.
+PostgreSQL 18.6 kjøres som container og installeres ikke på vertsmaskinen.
 
 Windows, i PowerShell fra prosjektroten:
 
@@ -132,18 +132,17 @@ og sjekker statuskode, innholdstype og JSON-respons for `/ping`.
 
 Når Java, Maven og Podman eller Docker er installert, kan hele den lokale
 oppstarten gjøres med ett skript. Skriptet kjører først en preflight-sjekk av
-verktøyene og container-runtime, deretter `mvn clean verify`, image-bygging og
-oppstart av tjenesten på port 8080. Hvis begge runtime-ene er installert,
-blir du bedt om å velge hvilken som skal brukes.
+verktøyene, container-runtime og Compose, deretter `mvn clean verify`,
+image-bygging og oppstart av tjenesten og PostgreSQL. Hvis begge runtime-ene er
+installert, blir du bedt om å velge hvilken som skal brukes.
 
 Før du starter må Java 25, Maven 3.9.16 og enten Podman eller Docker være
 installert. Podman machine eller Docker Desktop må også være startet på
 Windows og macOS.
 
-Skriptet kontrollerer verktøyene og runtime-en, sjekker at port 8080 er ledig,
-kjører `mvn clean verify`, bygger imaget `localhost/workshop-reiseapp:dev` og
-starter containeren `workshop-reiseapp` i bakgrunnen. Hvis både Podman og
-Docker er installert, får du et valg i terminalen.
+Skriptet kontrollerer verktøyene og runtime-en, sjekker at port 8080 og 5432 er
+ledige, kjører `mvn clean verify` og starter Compose-oppsettet i bakgrunnen.
+PostgreSQL må være frisk før API-containeren startes.
 
 Windows PowerShell:
 
@@ -179,15 +178,16 @@ Port 8080 brukes som standard. Velg en annen port slik:
 bash scripts/run-unix.sh --port 9090
 ```
 
-Containeren lytter fortsatt på port 8080 internt; parameteren endrer bare
-porten på vertsmaskinen.
+API-containeren lytter fortsatt på port 8080 internt; parameteren endrer bare
+porten på vertsmaskinen. PostgreSQL eksponeres på localhost port 5432. Velg en
+annen databaseport med `-DatabasePort 55432` på Windows eller
+`--database-port 55432` på Unix.
 
-Skriptet starter containeren i bakgrunnen. Test med
-`curl http://localhost:8080/ping`, følg logger med `podman logs -f
-workshop-reiseapp` eller `docker logs -f workshop-reiseapp`, og stopp med
-`podman stop workshop-reiseapp` eller `docker stop workshop-reiseapp`.
+Skriptet starter begge containerne i bakgrunnen. Test API-et med
+`curl http://localhost:8080/ping`, og følg alle logger med
+`podman compose logs -f` eller `docker compose logs -f`.
 
-Stopp tjenesten gjennom skriptet:
+Stopp tjenesten og databasen gjennom skriptet:
 
 ```powershell
 .\scripts\run-windows.ps1 -Stop
@@ -197,9 +197,10 @@ Stopp tjenesten gjennom skriptet:
 bash scripts/run-unix.sh --stop
 ```
 
-Når et run-skript startes på nytt, stopper det først en eksisterende
-`workshop-reiseapp`-container med valgt runtime. Du trenger derfor ikke å
-stoppe tjenesten manuelt før en ny build.
+Stopp fjerner containerne og Compose-nettverket, men beholder databasevolumet.
+Når et run-skript startes på nytt, stopper det først et eksisterende
+Compose-oppsett med valgt runtime. Du trenger derfor ikke å stoppe tjenestene
+manuelt før en ny build.
 
 Kjør skriptet på nytt etter kodeendringer. Det bygger prosjektet og imaget på
 nytt før containeren startes igjen.
@@ -219,7 +220,9 @@ eller kjør `curl http://localhost:8080/ping`. Forventet svar:
 {"message":"pong"}
 ```
 
-Ingen autentisering eller database kreves. Stopp tjenesten med Ctrl+C.
+Denne direktekommandoen starter bare API-et, ikke PostgreSQL-containeren. API-et
+bruker ennå ikke databasen før persistenslaget legges til. Stopp tjenesten med
+Ctrl+C.
 
 ## Kjør med Podman eller Docker
 
@@ -268,24 +271,52 @@ docker run --rm --name workshop-reiseapp -p 127.0.0.1:8080:8080 localhost/worksh
 Den samme `compose.yaml` brukes med begge verktøy. Docker trenger Compose-pluginen.
 `podman compose` trenger en ekstern Compose-provider, for eksempel
 `podman-compose` eller Docker Compose. Se [Podmans dokumentasjon](https://docs.podman.io/en/latest/markdown/podman-compose.1.html).
-Direktekommandoene over krever ingen Compose-provider.
+Installasjonsskriptene installerer en provider sammen med valgt runtime.
+Direktekommandoene over starter bare API-et og krever ingen Compose-provider.
 
 | Handling | Podman | Docker |
 | --- | --- | --- |
 | Kontroller oppsett | `podman compose config` | `docker compose config` |
 | Bygg image og start | `podman compose up --build -d` | `docker compose up --build -d` |
-| Se logger | `podman compose logs -f service` | `docker compose logs -f service` |
+| Start bare databasen | `podman compose up -d database` | `docker compose up -d database` |
+| Se alle logger | `podman compose logs -f` | `docker compose logs -f` |
+| Åpne psql | `podman compose exec database psql -U reiseapp -d reiseapp` | `docker compose exec database psql -U reiseapp -d reiseapp` |
 | Stopp og fjern containere/nettverk | `podman compose down` | `docker compose down` |
+| Nullstill databasen | `podman compose down --volumes` | `docker compose down --volumes` |
 
-Port 8080 må være ledig; stopp eventuell tidligere lokal kjøring først.
+Port 8080 og 5432 må være ledige; stopp eventuell tidligere lokal kjøring først.
 Ved kodeendringer kjøres `mvn clean verify` før containerbildet bygges på nytt.
 Compose bygger bare containerbildet, ikke Kotlin-koden.
 
-Oppsettet starter foreløpig bare tjenesten, som ikke bruker database.
-Databasevolum og reset legges til sammen med PostgreSQL-integrasjonen.
+Oppsettet starter API-et og PostgreSQL 18.6 i separate containere. Databasen
+heter `reiseapp`, og standardbrukeren heter `reiseapp` med passordet
+`reiseapp-local`. Disse standardverdiene er kun ment for lokal utvikling.
+De kan overstyres med miljøvariablene `REISEAPP_DATABASE_NAME`,
+`REISEAPP_DATABASE_USER` og `REISEAPP_DATABASE_PASSWORD`. Vertportene kan
+overstyres med `REISEAPP_API_PORT` og `REISEAPP_DATABASE_PORT` ved direkte bruk
+av Compose. Initialiseringsverdiene brukes bare når volumet er tomt; endring av
+navn, bruker eller passord for en eksisterende database krever reset.
+
+Det navngitte volumet `postgres-data` monteres på `/var/lib/postgresql`, som er
+volumplasseringen for det offisielle PostgreSQL-imaget fra versjon 18. Vanlig
+`compose down` og run-skriptenes stoppkommando bevarer volumet og dataene.
+`compose down --volumes` er en eksplisitt, destruktiv reset som sletter alle
+lokale databasedata. Neste oppstart oppretter databasen på nytt. Når migrering
+og startdata legges til i senere steg, vil de også kjøres på nytt etter reset.
+
+PostgreSQL-imaget er låst til `docker.io/library/postgres:18.6-trixie`.
+[PostgreSQL 18.6](https://www.postgresql.org/docs/18/release-18-6.html) er valgt
+i tråd med prosjektets versjonsføringer, og image-taggen finnes i
+[den offisielle image-listen](https://hub.docker.com/_/postgres/tags?name=18.6-trixie).
+
 Containerbildet er bygget med Podman av utvikleren. Oppstart, HTTP-kall fra
 Windows og nedstenging er verifisert med Podman 6.0.2 i rootless-modus på WSL2.
-Docker og Compose-kjøring er ennå ikke verifisert.
+PostgreSQL-imaget er verifisert separat med oppstart, readiness, SQL og bevaring
+av data gjennom ny container mot PostgreSQL 18.6 med Podman 6.0.2.
+Compose-oppsettet er verifisert på Windows med Podman 6.0.2 i rootless-modus og
+Docker Compose 5.5.1 som provider: bygg og test, image-bygging, venting på frisk
+database, HTTP 200 fra API-et, SQL, stopp med bevart volum og gjenoppstart med
+bevarte data. Docker Engine er ennå ikke verifisert.
 
 ### Windows: connection refused på localhost
 
