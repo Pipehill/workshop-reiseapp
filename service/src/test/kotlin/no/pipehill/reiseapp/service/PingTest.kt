@@ -4,10 +4,12 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import no.pipehill.reiseapp.service.person.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import tools.jackson.databind.ObjectMapper
 
 @SpringBootTest(
@@ -19,6 +21,9 @@ import tools.jackson.databind.ObjectMapper
     ],
 )
 class PingTest {
+    @MockitoBean
+    private lateinit var personRepository: PersonRepository
+
     @LocalServerPort
     private var port: Int = 0
 

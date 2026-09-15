@@ -129,6 +129,13 @@ endepunkter/modeller slik at gamle genererte filer fjernes.
 kjører en HTTP-integrasjonstest som starter tjenesten på en tilfeldig port
 og sjekker statuskode, innholdstype og JSON-respons for `/ping`.
 
+Repository-integrasjonstestene aktiveres når `REISEAPP_TEST_DATABASE_URL`,
+`REISEAPP_TEST_DATABASE_USER` og `REISEAPP_TEST_DATABASE_PASSWORD` er satt.
+Bruk en egen, tom PostgreSQL-database til disse testene. Flyway initialiserer
+databasen, og hver repositorytest kjøres i en transaksjon som rulles tilbake.
+Uten testvariablene hoppes disse testene over, slik at standardbygget ikke
+krever en kjørende database.
+
 ### Bygg og start med run-skript
 
 Når Java, Maven og Podman eller Docker er installert, kan hele den lokale
@@ -347,6 +354,15 @@ endrede personer, og slettede personer gjenopprettes ikke ved vanlig omstart.
 En eksplisitt reset av databasevolumet kjører både V1 og V2 på nytt og gir den
 opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
 Spring Boot 4.1.1 dependency management.
+
+### Repositorylag
+
+`Person` er både applikasjonens personmodell og en JPA-entitet mappet til
+`person`-tabellen. `PersonRepository` arver `JpaRepository`; `save` legger til
+personer, mens `findPersonById` og `findAll` bruker JPQL-spørringer deklarert med
+`@Query`. Ved opprettelse genererer PostgreSQL ID-en, mens applikasjonen setter
+registreringsdatoen. Hibernate validerer Flyway-skjemaet ved oppstart og kan
+ikke endre det. Open EntityManager in View er deaktivert.
 
 PostgreSQL-imaget er låst til `docker.io/library/postgres:18.6-trixie`.
 [PostgreSQL 18.6](https://www.postgresql.org/docs/18/release-18-6.html) er valgt
