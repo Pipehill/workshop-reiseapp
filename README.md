@@ -15,8 +15,8 @@ før de gjør endringer i prosjektet.
 - `service/`: kjørbar Spring Boot-tjeneste som implementerer API-grensesnittene.
 - `service/src/main/resources/db/migration/`: versjonerte Flyway-migreringer.
 
-Kontrakten inneholder foreløpig `GET /ping` og modellen `PingResponse` som et
-minimalt eksempel. Tjenesten svarer med `{"message":"pong"}` og HTTP 200.
+Kontrakten inneholder `GET /ping` samt endepunkter for å opprette og hente
+personer. API-grensesnitt og DTO-er genereres fra kontrakten.
 
 ## Bygg
 
@@ -125,9 +125,9 @@ Endre spesifikasjonen og bygg på nytt; generert kode skal ikke redigeres
 eller sjekkes inn. Bruk `clean verify` etter sletting eller omdøping av
 endepunkter/modeller slik at gamle genererte filer fjernes.
 
-`verify` kontrollerer validering, generering, kompilering og pakking, og
-kjører en HTTP-integrasjonstest som starter tjenesten på en tilfeldig port
-og sjekker statuskode, innholdstype og JSON-respons for `/ping`.
+`verify` kontrollerer validering, generering, kompilering og pakking. HTTP-
+testene starter tjenesten på tilfeldige porter og verifiserer `/ping` samt
+uthenting, oppretting, validering og ikke-funnet-respons for personendepunktene.
 
 Repository-integrasjonstestene aktiveres når `REISEAPP_TEST_DATABASE_URL`,
 `REISEAPP_TEST_DATABASE_USER` og `REISEAPP_TEST_DATABASE_PASSWORD` er satt.
@@ -249,6 +249,18 @@ Ved oppstart kobler tjenesten til databasen og kjører ventende Flyway-migrering
 Den direkte kommandoen starter ikke PostgreSQL-containeren. Stopp tjenesten med
 Ctrl+C.
 
+## Person-API
+
+| Metode og sti | Respons |
+| --- | --- |
+| `GET /persons` | HTTP 200 med alle personer sortert på ID |
+| `GET /persons/{personId}` | HTTP 200 med personen, eller HTTP 404 |
+| `POST /persons` | HTTP 201 med opprettet person og `Location`-header |
+
+En opprettingsforespørsel inneholder navn, avdeling, e-post, telefonnummer og
+kjønn. ID og registreringsdato settes av applikasjonen og returneres i responsen.
+Feltene valideres ut fra reglene i OpenAPI-kontrakten før servicelaget kalles.
+
 ## Kjør med Podman eller Docker
 
 Installer Podman (foretrukket) eller Docker med støtte for Linux-containere.
@@ -367,9 +379,10 @@ ikke endre det. Open EntityManager in View er deaktivert.
 ### Servicelag
 
 `PersonService` er et enkelt Spring-servicelag over `PersonRepository`. Det
-tilbyr `add`, `findById` og `findAll`, avgrenser transaksjonene og avviser at
-`add` brukes med en person som allerede har ID. Lesemetodene bruker read-only-
-transaksjoner.
+tilbyr `add`, `findById` og `findAll` og avgrenser transaksjonene. Mapping fra
+den genererte opprettings-DTO-en til `Person`, og fra `Person` til respons-DTO,
+ligger som private funksjoner direkte i servicelaget. Lesemetodene bruker
+read-only-transaksjoner.
 
 PostgreSQL-imaget er låst til `docker.io/library/postgres:18.6-trixie`.
 [PostgreSQL 18.6](https://www.postgresql.org/docs/18/release-18-6.html) er valgt

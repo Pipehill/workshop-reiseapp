@@ -167,11 +167,12 @@ Se README.md for forutsetninger, miljøvariabler og førstegangsoppsett.
 Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
 `spec/openapi.yaml` og modulen `api`. Modulen validerer kontrakten
 og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
-Modulen `service` implementerer `PingApi` og svarer med HTTP 200 og
-`{"message":"pong"}` på `GET /ping`. En HTTP-integrasjonstest starter
-Spring Boot på en tilfeldig port og kontrollerer responsen. Testen deaktiverer
-JDBC- og Flyway-autokonfigurasjon og bruker en testlokal `PersonRepository`-mock,
-og trenger derfor ikke en ekstern database.
+Modulen `service` implementerer `PingApi` og `PersonApi`. `GET /ping` svarer med
+HTTP 200 og `{"message":"pong"}`. Person-API-et tilbyr `GET /persons`,
+`GET /persons/{personId}` og `POST /persons`; kontrakten genererer egne DTO-er
+for oppretting og respons. HTTP-testene starter Spring Boot på tilfeldige porter
+og trenger ikke en ekstern database fordi databaseautokonfigurasjonen deaktiveres
+og berørte lag mockes.
 Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
 
 `service` bruker Spring Data JPA, Flyway 12.4.0, PostgreSQL-modulen for Flyway
@@ -196,9 +197,12 @@ hoppes de over. Testene er verifisert mot en isolert PostgreSQL 18.6-database.
 
 `PersonService` er et konkret servicelag uten eget interface. Det tilbyr
 `add`, `findById` og `findAll`, eier transaksjonsgrensene og delegerer til
-`PersonRepository`. `add` godtar bare nye personer uten ID; lesemetodene bruker
-read-only-transaksjoner. Servicelaget har isolerte enhetstester med mocket
-repository.
+`PersonRepository`. Det mapper mellom genererte API-DTO-er og JPA-entiteten med
+private funksjoner direkte i servicelaget; lesemetodene bruker read-only-
+transaksjoner. `PersonController` implementerer det genererte `PersonApi`-
+grensesnittet og håndterer bare HTTP-responsene. Servicelaget har isolerte
+enhetstester med mocket repository, og controllerens HTTP-oppførsel og
+inputvalidering er testet separat.
 
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
 `service/Dockerfile` pakker Maven-byggets JAR i
@@ -232,7 +236,7 @@ korrekte kolonner, regler og indeks samt en tilbakerullet testinnsetting. Flyway
 V2 er verifisert med ti startpersoner uten duplikater ved omstart. Docker Engine
 er ikke verifisert. CI er ikke opprettet.
 
-Teknologiversjoner og generator er valgt i tabellen over. Domeneendepunkter og
-CI-actions er ennå ikke valgt.
+Teknologiversjoner og generator er valgt i tabellen over. Ping skal fortsatt
+gjøres om til et helseendepunkt. CI-actions er ennå ikke valgt.
 Dokumenter de faktiske kommandoene for bygg, test og lokal kjøring når
 oppsettet er på plass, og verifiser versjonskombinasjonen da.
