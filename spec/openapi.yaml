@@ -4,23 +4,24 @@ info:
   version: 0.1.0
   description: API-kontrakt for reiseappen.
 tags:
-  - name: Ping
-    description: Enkel kontrakt for å verifisere prosjektoppsettet.
+  - name: Health
+    description: Livssjekk for applikasjonen.
   - name: Person
     description: Oppretting og uthenting av personer.
 paths:
-  /ping:
+  /health:
     get:
-      tags: [Ping]
-      operationId: ping
-      summary: Returnerer en enkel bekreftelse fra API-et.
+      tags: [Health]
+      operationId: health
+      summary: Kontrollerer at API-et kan svare.
+      description: Livssjekk for applikasjonen. Kontrollerer ikke databasetilkoblingen.
       responses:
         '200':
           description: API-et svarer.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PingResponse'
+                $ref: '#/components/schemas/HealthResponse'
   /persons:
     get:
       tags: [Person]
@@ -85,14 +86,14 @@ paths:
           description: Personen finnes ikke.
 components:
   schemas:
-    PingResponse:
+    HealthResponse:
       type: object
-      required: [message]
+      required: [status]
       properties:
-        message:
+        status:
           type: string
-          minLength: 1
-          example: pong
+          enum: [UP]
+          example: UP
     CreatePersonRequest:
       type: object
       required: [name, department, email, phoneNumber, gender]

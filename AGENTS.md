@@ -167,8 +167,10 @@ Se README.md for forutsetninger, miljøvariabler og førstegangsoppsett.
 Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
 `spec/openapi.yaml` og modulen `api`. Modulen validerer kontrakten
 og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
-Modulen `service` implementerer `PingApi` og `PersonApi`. `GET /ping` svarer med
-HTTP 200 og `{"message":"pong"}`. Person-API-et tilbyr `GET /persons`,
+Modulen `service` implementerer `HealthApi` og `PersonApi`. `GET /health` svarer
+med HTTP 200 og `{"status":"UP"}`. Dette er en livssjekk for API-et og kontrollerer
+ikke databasetilkoblingen. Det tidligere `/ping`-endepunktet er fjernet.
+Person-API-et tilbyr `GET /persons`,
 `GET /persons/{personId}` og `POST /persons`; kontrakten genererer egne DTO-er
 for oppretting og respons. HTTP-testene starter Spring Boot på tilfeldige porter
 og trenger ikke en ekstern database fordi databaseautokonfigurasjonen deaktiveres
@@ -223,7 +225,7 @@ containerne i bakgrunnen. Begge spør om Podman eller Docker når begge finnes,
 eller kan få runtime eksplisitt som argument. Begge støtter valgfrie host-porter,
 eksplisitt stopp med bevaring av databasevolumet og stopper et eksisterende
 Compose-oppsett før ny build/start.
-Utvikleren har bygget imaget med Podman. Oppstart, HTTP 200 med pong fra
+Utvikleren har bygget imaget med Podman. Oppstart, HTTP 200 fra API-et fra
 Windows via localhost:8080 og nedstenging er verifisert med Podman 6.0.2
 i rootless-modus. Rootful-oppsettet på denne Windows/WSL2-maskinen videresendte
 ikke porten til Windows; bytte til rootless løste problemet. Se README.md.
@@ -236,7 +238,7 @@ korrekte kolonner, regler og indeks samt en tilbakerullet testinnsetting. Flyway
 V2 er verifisert med ti startpersoner uten duplikater ved omstart. Docker Engine
 er ikke verifisert. CI er ikke opprettet.
 
-Teknologiversjoner og generator er valgt i tabellen over. Ping skal fortsatt
-gjøres om til et helseendepunkt. CI-actions er ennå ikke valgt.
+Teknologiversjoner og generator er valgt i tabellen over. CI-actions er ennå
+ikke valgt.
 Dokumenter de faktiske kommandoene for bygg, test og lokal kjøring når
 oppsettet er på plass, og verifiser versjonskombinasjonen da.
