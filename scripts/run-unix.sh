@@ -8,7 +8,8 @@ Usage: bash scripts/run-unix.sh [options]
 Options:
   --runtime podman|docker  Select the container runtime.
   --port PORT              Host port (default: 8080).
-  --stop                   Stop the service container and exit.
+  --database-port PORT     PostgreSQL host port (default: 5432).
+  --stop                   Stop the service and database containers and exit.
   --help                   Show this help.
 
 The default action builds, tests, and starts the service in the background.
@@ -17,6 +18,7 @@ EOF
 
 runtime=""
 port=8080
+database_port=5432
 stop=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -31,6 +33,14 @@ while [[ $# -gt 0 ]]; do
         exit 2
       }
       port="$2"
+      shift 2
+      ;;
+    --database-port)
+      [[ $# -ge 2 && "$2" =~ ^[0-9]+$ && "$2" -ge 1 && "$2" -le 65535 ]] || {
+        echo "--database-port requires a number between 1 and 65535" >&2
+        exit 2
+      }
+      database_port="$2"
       shift 2
       ;;
     --stop)
@@ -79,21 +89,22 @@ esac
 
 command -v "$runtime" >/dev/null 2>&1 || { echo "$runtime is not installed or not available in PATH." >&2; exit 1; }
 "$runtime" info >/dev/null
+"$runtime" compose version >/dev/null || {
+  echo "$runtime Compose is not available. Run the installation script first." >&2
+  exit 1
+}
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
-image="localhost/workshop-reiseapp:dev"
-container="workshop-reiseapp"
 
-stop_existing_container() {
-  echo "Stopping existing container $container if present ..."
-  "$runtime" stop -t 30 "$container" >/dev/null 2>&1 || true
-  "$runtime" rm -f "$container" >/dev/null 2>&1 || true
+stop_existing_containers() {
+  echo "Stopping existing application and database containers if present ..."
+  "$runtime" compose down --remove-orphans
 }
 
 if [[ "$stop" == true ]]; then
-  stop_existing_container
-  echo "Container $container is stopped."
+  stop_existing_containers
+  echo "The application and database containers are stopped. Database data is preserved."
   exit 0
 fi
 
@@ -104,20 +115,29 @@ echo "Checking Java, Maven, and $runtime ..."
 java -version
 mvn -version
 
-stop_existing_container
+[[ "$port" != "$database_port" ]] || {
+  echo "The API port and database port must be different." >&2
+  exit 2
+}
+
+stop_existing_containers
 if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 "$port" >/dev/null 2>&1; then
   echo "Port $port is already in use. Stop the service using it before starting again." >&2
+  exit 1
+fi
+if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 "$database_port" >/dev/null 2>&1; then
+  echo "Port $database_port is already in use. Stop the database using it or select another database port." >&2
   exit 1
 fi
 
 echo "Building and testing the project ..."
 mvn clean verify
 
-echo "Building the container image with $runtime ..."
-"$runtime" build -t "$image" ./service
+export REISEAPP_API_PORT="$port"
+export REISEAPP_DATABASE_PORT="$database_port"
+echo "Building and starting the application and PostgreSQL with $runtime Compose ..."
+"$runtime" compose up --build -d
 
-echo "Starting $container on host port $port ..."
-"$runtime" run --rm --name "$container" -d -p "127.0.0.1:${port}:8080" "$image"
-
-echo "The service is running with $runtime. Test: http://localhost:$port/ping"
-echo "Logs: $runtime logs -f $container"
+echo "The service is running at http://localhost:$port/ping"
+echo "PostgreSQL is available at localhost:$database_port (database: ${REISEAPP_DATABASE_NAME:-reiseapp}, user: ${REISEAPP_DATABASE_USER:-reiseapp})."
+echo "Logs: $runtime compose logs -f"

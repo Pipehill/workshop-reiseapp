@@ -4,16 +4,19 @@ param(
     [string]$ContainerRuntime = 'auto',
     [ValidateRange(1, 65535)]
     [int]$Port = 8080,
+    [ValidateRange(1, 65535)]
+    [int]$DatabasePort = 5432,
     [switch]$Stop
 )
 
 $ErrorActionPreference = 'Stop'
-$image = 'localhost/workshop-reiseapp:dev'
-$container = 'workshop-reiseapp'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
 if ($ContainerRuntime -notin @('auto', 'podman', 'docker')) {
     throw "Invalid runtime '$ContainerRuntime'. Use auto, podman, or docker."
+}
+if ($Port -eq $DatabasePort) {
+    throw 'The API port and database port must be different.'
 }
 
 function Require-Command([string]$Name) {
@@ -46,16 +49,29 @@ if ($ContainerRuntime -eq 'auto') {
 
 Require-Command $ContainerRuntime
 & $ContainerRuntime info | Out-Null
+& $ContainerRuntime compose version
+if ($LASTEXITCODE -ne 0) {
+    throw "$ContainerRuntime Compose is not available. Run the installation script first."
+}
 
-function Stop-ExistingContainer {
-    Write-Host "Stopping existing container $container if present ..."
-    & $ContainerRuntime stop -t 30 $container 2>$null | Out-Null
-    & $ContainerRuntime rm -f $container 2>$null | Out-Null
+function Invoke-Compose([string[]]$ComposeArguments) {
+    Push-Location $repoRoot
+    try {
+        & $ContainerRuntime compose @ComposeArguments
+        if ($LASTEXITCODE -ne 0) { throw "$ContainerRuntime Compose failed." }
+    } finally {
+        Pop-Location
+    }
+}
+
+function Stop-ExistingContainers {
+    Write-Host 'Stopping existing application and database containers if present ...'
+    Invoke-Compose -ComposeArguments @('down', '--remove-orphans')
 }
 
 if ($Stop) {
-    Stop-ExistingContainer
-    Write-Host "Container $container is stopped."
+    Stop-ExistingContainers
+    Write-Host 'The application and database containers are stopped. Database data is preserved.'
     exit 0
 }
 
@@ -66,9 +82,12 @@ Write-Host "Checking Java, Maven, and $ContainerRuntime ..."
 & java -version
 & mvn -version
 
-Stop-ExistingContainer
+Stop-ExistingContainers
 if (Test-NetConnection -ComputerName 127.0.0.1 -Port $Port -InformationLevel Quiet) {
     throw "Port $Port is already in use. Stop the service using it before starting again."
+}
+if (Test-NetConnection -ComputerName 127.0.0.1 -Port $DatabasePort -InformationLevel Quiet) {
+    throw "Port $DatabasePort is already in use. Stop the database using it or select another database port."
 }
 
 Push-Location $repoRoot
@@ -76,17 +95,17 @@ try {
     Write-Host 'Building and testing the project ...'
     & mvn clean verify
     if ($LASTEXITCODE -ne 0) { throw 'The Maven build failed.' }
-
-    Write-Host "Building the container image with $ContainerRuntime ..."
-    & $ContainerRuntime build -t $image ./service
-    if ($LASTEXITCODE -ne 0) { throw 'The container build failed.' }
-
-    Write-Host "Starting $container on host port $Port ..."
-    & $ContainerRuntime run --rm --name $container -d -p "127.0.0.1:${Port}:8080" $image
-    if ($LASTEXITCODE -ne 0) { throw 'The container could not be started.' }
 } finally {
     Pop-Location
 }
 
-Write-Host "The service is running with $ContainerRuntime. Test: http://localhost:$Port/ping"
-Write-Host "Logs: $ContainerRuntime logs -f $container"
+$env:REISEAPP_API_PORT = $Port.ToString()
+$env:REISEAPP_DATABASE_PORT = $DatabasePort.ToString()
+$databaseName = if ([string]::IsNullOrWhiteSpace($env:REISEAPP_DATABASE_NAME)) { 'reiseapp' } else { $env:REISEAPP_DATABASE_NAME }
+$databaseUser = if ([string]::IsNullOrWhiteSpace($env:REISEAPP_DATABASE_USER)) { 'reiseapp' } else { $env:REISEAPP_DATABASE_USER }
+Write-Host "Building and starting the application and PostgreSQL with $ContainerRuntime Compose ..."
+Invoke-Compose -ComposeArguments @('up', '--build', '-d')
+
+Write-Host "The service is running at http://localhost:$Port/ping"
+Write-Host "PostgreSQL is available at localhost:$DatabasePort (database: $databaseName, user: $databaseUser)."
+Write-Host "Logs: $ContainerRuntime compose logs -f"
