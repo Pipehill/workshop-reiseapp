@@ -49,7 +49,8 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 
 ### Valgte versjoner
 
-Versjonsvalg kontrollert mot offisielle kilder 13. september 2026.
+De opprinnelige versjonsvalgene ble kontrollert mot offisielle kilder
+13. september 2026; Flyway og PostgreSQL JDBC ble kontrollert 15. september 2026.
 Kodegenerering, kompilering og pakking av kontraktmodulen er verifisert på
 Windows med Java 25. Container- og Compose-kjøring er verifisert med Podman
 6.0.2 (Windows/WSL2, rootless) og Docker Compose 5.5.1 som provider, men ikke
@@ -62,6 +63,8 @@ med Docker Engine.
 | Spring Boot | 4.1.1 | Nyeste stabile utgivelse; ingen kommersiell støtteavtale forutsettes. [Utgivelse](https://github.com/spring-projects/spring-boot/releases/tag/v4.1.1). |
 | Maven | 3.9.16 | Nyeste stabile utgivelse; 3.10 og 4.0 er foreløpig forhåndsversjoner. [Nedlasting](https://maven.apache.org/download.cgi). |
 | PostgreSQL | 18.6 | Nyeste stabile hovedversjon med siste vedlikeholdsutgivelse. PostgreSQL gir fem års støtte per hovedversjon, uten egen LTS-linje. [Versjonspolicy](https://www.postgresql.org/support/versioning/). |
+| Flyway | 12.4.0 | Versjonen forvaltes av Spring Boot 4.1.1. PostgreSQL 18 er støttet, og `flyway-database-postgresql` brukes som separat databasemodul. [Spring Boot dependency management](https://docs.spring.io/spring-boot/appendix/dependency-versions/coordinates.html) og [Flyway PostgreSQL-støtte](https://documentation.red-gate.com/flyway/reference/database-driver-reference/postgresql-database). |
+| PostgreSQL JDBC | 42.7.13 | Nyeste stabile JDBC-driver, forvaltet av Spring Boot 4.1.1. [pgJDBC-nedlasting](https://jdbc.postgresql.org/download/). |
 | OpenAPI-spesifikasjon | 3.0.4 | Bevisst kompatibilitetsunntak for kodegenerering, se nedenfor. [Spesifikasjon](https://spec.openapis.org/oas/v3.0.4.html). |
 | OpenAPI Generator Maven Plugin | 7.25.0 | Nyeste stabile utgivelse. Velg generatoren `kotlin-spring`. [Utgivelse](https://github.com/OpenAPITools/openapi-generator/releases/tag/v7.25.0). |
 | Podman | 6.1.1 | Foretrukket referanseversjon for lokal kjøring. [Utgivelse](https://github.com/podman-container-tools/podman/releases/tag/v6.1.1). |
@@ -165,8 +168,18 @@ Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
 og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
 Modulen `service` implementerer `PingApi` og svarer med HTTP 200 og
 `{"message":"pong"}` på `GET /ping`. En HTTP-integrasjonstest starter
-Spring Boot på en tilfeldig port og kontrollerer responsen.
+Spring Boot på en tilfeldig port og kontrollerer responsen. Testen deaktiverer
+JDBC- og Flyway-autokonfigurasjon og trenger derfor ikke en ekstern database.
 Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
+
+`service` bruker Spring JDBC, Flyway 12.4.0, PostgreSQL-modulen for Flyway og
+PostgreSQL JDBC 42.7.13. `V1__create_person_table.sql` oppretter tabellen
+`person` med identity-ID, navn, avdeling, e-post, telefonnummer, kjønn og
+registreringsdato. Tekstfeltene er påkrevde og kan ikke være blanke; e-post er
+unik uavhengig av store/små bokstaver. `V2__seed_person_table.sql` legger inn
+ti deterministiske, fiktive personer. Flyway kjører seedingen bare ved første
+initialisering, slik at vanlig omstart ikke overskriver, gjenoppretter eller
+dupliserer data. Reset av databasevolumet gjenoppretter de opprinnelige dataene.
 
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
 `service/Dockerfile` pakker Maven-byggets JAR i
@@ -195,8 +208,10 @@ PostgreSQL-imaget er verifisert separat med oppstart, readiness, SQL og bevaring
 av data gjennom ny container mot PostgreSQL 18.6 med Podman 6.0.2. Det samlede
 Compose-oppsettet er verifisert med Docker Compose 5.5.1 som Podman-provider:
 bygg og test, image-bygging, databasehelse, HTTP, SQL, stopp med bevart volum og
-gjenoppstart med bevarte data. Docker Engine er ikke verifisert. Databaseskjema
-og CI er ikke opprettet.
+gjenoppstart med bevarte data. Flyway V1 er verifisert mot PostgreSQL 18.6 med
+korrekte kolonner, regler og indeks samt en tilbakerullet testinnsetting. Flyway
+V2 er verifisert med ti startpersoner uten duplikater ved omstart. Docker Engine
+er ikke verifisert. CI er ikke opprettet.
 
 Teknologiversjoner og generator er valgt i tabellen over. Domeneendepunkter og
 CI-actions er ennå ikke valgt.
