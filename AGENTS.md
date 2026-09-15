@@ -194,6 +194,12 @@ testdatabase gjennom miljøvariablene `REISEAPP_TEST_DATABASE_URL`,
 `REISEAPP_TEST_DATABASE_USER` og `REISEAPP_TEST_DATABASE_PASSWORD`; ellers
 hoppes de over. Testene er verifisert mot en isolert PostgreSQL 18.6-database.
 
+`PersonService` er et konkret servicelag uten eget interface. Det tilbyr
+`add`, `findById` og `findAll`, eier transaksjonsgrensene og delegerer til
+`PersonRepository`. `add` godtar bare nye personer uten ID; lesemetodene bruker
+read-only-transaksjoner. Servicelaget har isolerte enhetstester med mocket
+repository.
+
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
 `service/Dockerfile` pakker Maven-byggets JAR i
 `docker.io/library/eclipse-temurin:25.0.4_7-jre-noble` (Linux JRE 25.0.4+7,

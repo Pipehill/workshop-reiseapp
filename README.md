@@ -364,6 +364,13 @@ personer, mens `findPersonById` og `findAll` bruker JPQL-spørringer deklarert m
 registreringsdatoen. Hibernate validerer Flyway-skjemaet ved oppstart og kan
 ikke endre det. Open EntityManager in View er deaktivert.
 
+### Servicelag
+
+`PersonService` er et enkelt Spring-servicelag over `PersonRepository`. Det
+tilbyr `add`, `findById` og `findAll`, avgrenser transaksjonene og avviser at
+`add` brukes med en person som allerede har ID. Lesemetodene bruker read-only-
+transaksjoner.
+
 PostgreSQL-imaget er låst til `docker.io/library/postgres:18.6-trixie`.
 [PostgreSQL 18.6](https://www.postgresql.org/docs/18/release-18-6.html) er valgt
 i tråd med prosjektets versjonsføringer, og image-taggen finnes i
