@@ -6,6 +6,8 @@ info:
 tags:
   - name: Ping
     description: Enkel kontrakt for å verifisere prosjektoppsettet.
+  - name: Person
+    description: Oppretting og uthenting av personer.
 paths:
   /ping:
     get:
@@ -19,6 +21,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PingResponse'
+  /persons:
+    get:
+      tags: [Person]
+      operationId: listPersons
+      summary: Henter alle registrerte personer.
+      responses:
+        '200':
+          description: Alle registrerte personer, sortert på ID.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonResponse'
+    post:
+      tags: [Person]
+      operationId: createPerson
+      summary: Registrerer en ny person.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePersonRequest'
+      responses:
+        '201':
+          description: Personen ble registrert.
+          headers:
+            Location:
+              description: Relativ URI til den registrerte personen.
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+        '400':
+          description: Forespørselen er ugyldig.
+  /persons/{personId}:
+    get:
+      tags: [Person]
+      operationId: getPerson
+      summary: Henter én registrert person.
+      parameters:
+        - name: personId
+          in: path
+          required: true
+          description: Personens ID.
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Personen som har angitt ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+        '404':
+          description: Personen finnes ikke.
 components:
   schemas:
     PingResponse:
@@ -29,3 +93,70 @@ components:
           type: string
           minLength: 1
           example: pong
+    CreatePersonRequest:
+      type: object
+      required: [name, department, email, phoneNumber, gender]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Vennlige Foss
+        department:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Produkt
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          example: vennlige.foss@reiseapp.test
+        phoneNumber:
+          type: string
+          minLength: 1
+          maxLength: 32
+          example: +47 0000 0011
+        gender:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: kvinne
+    PersonResponse:
+      type: object
+      required: [id, name, department, email, phoneNumber, gender, registrationDate]
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 11
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Vennlige Foss
+        department:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Produkt
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          example: vennlige.foss@reiseapp.test
+        phoneNumber:
+          type: string
+          minLength: 1
+          maxLength: 32
+          example: +47 0000 0011
+        gender:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: kvinne
+        registrationDate:
+          type: string
+          format: date
+          example: '2026-09-15'
