@@ -13,6 +13,7 @@ før de gjør endringer i prosjektet.
 - `pom.xml`: Maven-parent med felles versjoner og moduler.
 - `api/`: genererer og kompilerer Kotlin-DTO-er og Spring API-grensesnitt.
 - `service/`: kjørbar Spring Boot-tjeneste som implementerer API-grensesnittene.
+- `service/src/main/resources/db/migration/`: versjonerte Flyway-migreringer.
 
 Kontrakten inneholder foreløpig `GET /ping` og modellen `PingResponse` som et
 minimalt eksempel. Tjenesten svarer med `{"message":"pong"}` og HTTP 200.
@@ -207,9 +208,26 @@ nytt før containeren startes igjen.
 
 ## Kjør tjenesten
 
-Etter `mvn clean verify`, start tjenesten med JDK 25:
+Etter `mvn clean verify` kan tjenesten kjøres direkte med JDK 25 mot en startet
+PostgreSQL-database. Start for eksempel bare databasen med
+`podman compose up -d database`, og sett tilkoblingsvariablene før tjenesten
+startes.
+
+Windows PowerShell:
+
+```powershell
+$env:SPRING_DATASOURCE_URL = 'jdbc:postgresql://localhost:5432/reiseapp'
+$env:SPRING_DATASOURCE_USERNAME = 'reiseapp'
+$env:SPRING_DATASOURCE_PASSWORD = 'reiseapp-local'
+java -jar service/target/service-0.1.0-SNAPSHOT.jar
+```
+
+Unix:
 
 ```sh
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/reiseapp \
+SPRING_DATASOURCE_USERNAME=reiseapp \
+SPRING_DATASOURCE_PASSWORD=reiseapp-local \
 java -jar service/target/service-0.1.0-SNAPSHOT.jar
 ```
 
@@ -220,8 +238,8 @@ eller kjør `curl http://localhost:8080/ping`. Forventet svar:
 {"message":"pong"}
 ```
 
-Denne direktekommandoen starter bare API-et, ikke PostgreSQL-containeren. API-et
-bruker ennå ikke databasen før persistenslaget legges til. Stopp tjenesten med
+Ved oppstart kobler tjenesten til databasen og kjører ventende Flyway-migreringer.
+Den direkte kommandoen starter ikke PostgreSQL-containeren. Stopp tjenesten med
 Ctrl+C.
 
 ## Kjør med Podman eller Docker
@@ -301,8 +319,34 @@ Det navngitte volumet `postgres-data` monteres på `/var/lib/postgresql`, som er
 volumplasseringen for det offisielle PostgreSQL-imaget fra versjon 18. Vanlig
 `compose down` og run-skriptenes stoppkommando bevarer volumet og dataene.
 `compose down --volumes` er en eksplisitt, destruktiv reset som sletter alle
-lokale databasedata. Neste oppstart oppretter databasen på nytt. Når migrering
-og startdata legges til i senere steg, vil de også kjøres på nytt etter reset.
+lokale databasedata. Neste oppstart oppretter databasen, kjører migreringene på
+nytt og gjenoppretter de ti opprinnelige personene.
+
+### Databaseskjema
+
+Spring Boot kjører Flyway 12.4.0 ved oppstart. Migreringen
+`V1__create_person_table.sql` oppretter tabellen `person` med følgende kolonner:
+
+| Kolonne | PostgreSQL-type | Regler |
+| --- | --- | --- |
+| `id` | `BIGINT` | Primærnøkkel, genereres alltid som identity |
+| `name` | `VARCHAR(200)` | Påkrevd og kan ikke være blank |
+| `department` | `VARCHAR(100)` | Påkrevd og kan ikke være blank |
+| `email` | `VARCHAR(254)` | Påkrevd, ikke blank og unik uavhengig av store/små bokstaver |
+| `phone_number` | `VARCHAR(32)` | Påkrevd og kan ikke være blank |
+| `gender` | `VARCHAR(50)` | Påkrevd og kan ikke være blank |
+| `registration_date` | `DATE` | Påkrevd, standard er databasens gjeldende dato |
+
+`V2__seed_person_table.sql` legger inn ti fiktive personer med faste data.
+Navnene består av adjektiv som fornavn og substantiv som etternavn; enkelte har
+to fornavn eller etternavn. E-postadressene bruker det reserverte `.test`-domenet,
+og telefonnumrene er åpenbart fiktive.
+
+Flyway registrerer V2 etter første vellykkede kjøring. Derfor overskrives ikke
+endrede personer, og slettede personer gjenopprettes ikke ved vanlig omstart.
+En eksplisitt reset av databasevolumet kjører både V1 og V2 på nytt og gir den
+opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
+Spring Boot 4.1.1 dependency management.
 
 PostgreSQL-imaget er låst til `docker.io/library/postgres:18.6-trixie`.
 [PostgreSQL 18.6](https://www.postgresql.org/docs/18/release-18-6.html) er valgt
