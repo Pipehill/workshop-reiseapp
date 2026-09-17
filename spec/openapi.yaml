@@ -4,6 +4,8 @@ info:
   version: 0.1.0
   description: API-kontrakt for reiseappen.
 tags:
+  - name: Activity
+    description: Uthenting av aktiviteter og praktiske råd.
   - name: Health
     description: Livssjekk for applikasjonen.
   - name: Person
@@ -11,6 +13,44 @@ tags:
   - name: Room
     description: Uthenting av rom og romdetaljer.
 paths:
+  /activities:
+    get:
+      tags: [Activity]
+      operationId: listActivities
+      summary: Henter alle aktiviteter.
+      responses:
+        '200':
+          description: Alle aktiviteter sortert på starttidspunkt og deretter ID.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityResponse'
+  /activities/{activityId}:
+    get:
+      tags: [Activity]
+      operationId: getActivity
+      summary: Henter detaljer om en aktivitet.
+      parameters:
+        - name: activityId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Aktiviteten med angitt ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityResponse'
+        '400':
+          description: Ugyldig aktivitets-ID.
+        '404':
+          description: Aktiviteten finnes ikke.
   /health:
     get:
       tags: [Health]
@@ -127,6 +167,44 @@ paths:
           description: Rommet finnes ikke.
 components:
   schemas:
+    ActivityResponse:
+      type: object
+      description: En aktivitet varer fra og med 2 til og med 8 timer.
+      required: [id, title, description, maxParticipants, startTime, endTime, notes]
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Fjelltur til utsiktspunktet
+        description:
+          type: string
+          minLength: 1
+          example: Guidet fjelltur med matpause og utsikt over fjorden.
+        maxParticipants:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 16
+        startTime:
+          type: string
+          format: date-time
+          description: Starttidspunkt med UTC-offset.
+          example: '2026-10-03T09:00:00+02:00'
+        endTime:
+          type: string
+          format: date-time
+          description: Sluttidspunkt med UTC-offset, 2–8 timer etter start.
+          example: '2026-10-03T15:00:00+02:00'
+        notes:
+          type: string
+          description: Fritekst med praktiske råd og utstyr deltakeren bør huske. Tom streng hvis det ikke finnes råd.
+          example: Ta med varme klær og gode tursko. Pakk mat og vann i en sekk.
     PersonDetailsResponse:
       allOf:
         - $ref: '#/components/schemas/PersonResponse'

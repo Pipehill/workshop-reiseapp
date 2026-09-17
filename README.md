@@ -289,6 +289,30 @@ og året rommet sist ble renovert. Antall senger er begrenset til 1, 2 eller 4.
 Romdataene er read-only; API-et har ingen endepunkter for å opprette eller endre
 rom.
 
+## Aktivitets-API
+
+- `GET /activities` returnerer alle aktiviteter sortert på starttidspunkt og
+  deretter ID.
+- `GET /activities/{activityId}` returnerer aktiviteten, HTTP 404 hvis den ikke
+  finnes, eller HTTP 400 ved ugyldig ID.
+
+Begge responsene inneholder `id`, `title`, `description`,
+`maxParticipants`, `startTime`, `endTime` og `notes` (fritekst med
+praktiske råd og utstyr, tom streng hvis det ikke finnes råd).
+Tidspunktene er ISO 8601 med UTC-offset; offset kan
+normaliseres til UTC ved uthenting. Varigheten er mellom 2 og 8 timer, inkludert
+grensene. Det finnes ingen skriveendepunkter for aktiviteter.
+
+Flyway V7 oppretter `activity` med `notes` som fritekstfelt. Databasen håndhever
+positiv kapasitet, varighet og ikke-blanke tekstfelt. V8 seeder fem aktiviteter
+3.–4. oktober 2026: fjelltur (6 timer), kajakktur (3 timer), matkurs (4 timer),
+byvandring (2 timer) og skogstur (8 timer), alle med tilpassede praktiske råd.
+Seedingen kjøres én gang og overskriver ikke data ved senere oppstart.
+
+`ActivityRepository` henter aktiviteter med JPQL.
+`ActivityService` mapper til generert DTO innenfor read-only-transaksjoner,
+og `ActivityController` implementerer det genererte `ActivityApi`.
+
 ## Kjør med Podman eller Docker
 
 Installer Podman (foretrukket) eller Docker med støtte for Linux-containere.
@@ -367,7 +391,8 @@ volumplasseringen for det offisielle PostgreSQL-imaget fra versjon 18. Vanlig
 `compose down` og run-skriptenes stoppkommando bevarer volumet og dataene.
 `compose down --volumes` er en eksplisitt, destruktiv reset som sletter alle
 lokale databasedata. Neste oppstart oppretter databasen, kjører migreringene på
-nytt og gjenoppretter de ti opprinnelige personene og de 20 opprinnelige rommene.
+nytt og gjenoppretter de ti opprinnelige personene, de 20 rommene,
+romfordelingen og de fem aktivitetene med praktiske råd.
 
 ### Databaseskjema
 
@@ -404,7 +429,7 @@ har fremmednøkler; sletting av en person fjerner også koblingen.
 på e-post og gjenoppretter ikke slettede personer eller rom. Den kjøres bare én
 gang gjennom Flyway, også ved oppgradering av eksisterende databaser.
 
-En eksplisitt reset av databasevolumet kjører V1–V6 på nytt og gir den
+En eksplisitt reset av databasevolumet kjører V1–V8 på nytt og gir den
 opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
 Spring Boot 4.1.1 dependency management.
 

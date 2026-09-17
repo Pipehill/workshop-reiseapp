@@ -35,6 +35,9 @@ class HealthTest {
     @LocalServerPort
     private var port: Int = 0
 
+    @MockitoBean
+    private lateinit var activityRepository: no.pipehill.reiseapp.service.activity.ActivityRepository
+
     @Test
     fun `health returns UP as JSON without authentication or a database`() {
         HttpClient.newHttpClient().use { client ->

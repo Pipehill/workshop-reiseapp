@@ -39,6 +39,9 @@ class RoomControllerTest {
     @LocalServerPort
     private var port: Int = 0
 
+    @MockitoBean
+    private lateinit var activityRepository: no.pipehill.reiseapp.service.activity.ActivityRepository
+
     private val mapper = ObjectMapper()
 
     @Test
