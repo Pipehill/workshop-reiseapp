@@ -1,0 +1,22 @@
+INSERT INTO room (room_number, size_square_meters, number_of_beds, has_balcony, last_renovated_year)
+VALUES
+    (101, 14, 1, FALSE, 2021),
+    (102, 16, 1, FALSE, 2023),
+    (103, 18, 1, TRUE,  2020),
+    (104, 22, 2, FALSE, 2024),
+    (105, 24, 2, TRUE,  2022),
+    (106, 25, 2, FALSE, 2019),
+    (107, 28, 2, TRUE,  2025),
+    (108, 34, 4, FALSE, 2021),
+    (109, 38, 4, TRUE,  2023),
+    (110, 42, 4, TRUE,  2020),
+    (201, 15, 1, FALSE, 2024),
+    (202, 17, 1, TRUE,  2022),
+    (203, 19, 1, FALSE, 2018),
+    (204, 23, 2, TRUE,  2024),
+    (205, 26, 2, FALSE, 2020),
+    (206, 27, 2, TRUE,  2023),
+    (207, 30, 2, TRUE,  2025),
+    (208, 36, 4, FALSE, 2019),
+    (209, 40, 4, TRUE,  2022),
+    (210, 45, 4, TRUE,  2024);

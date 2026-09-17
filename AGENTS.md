@@ -167,7 +167,7 @@ Se README.md for forutsetninger, miljøvariabler og førstegangsoppsett.
 Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
 `spec/openapi.yaml` og modulen `api`. Modulen validerer kontrakten
 og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
-Modulen `service` implementerer `HealthApi` og `PersonApi`. `GET /health` svarer
+Modulen `service` implementerer `HealthApi`, `PersonApi` og `RoomApi`. `GET /health` svarer
 med HTTP 200 og `{"status":"UP"}`. Dette er en livssjekk for API-et og kontrollerer
 ikke databasetilkoblingen. Det tidligere `/ping`-endepunktet er fjernet.
 Person-API-et tilbyr `GET /persons`,
@@ -177,6 +177,10 @@ og trenger ikke en ekstern database fordi databaseautokonfigurasjonen deaktivere
 og berørte lag mockes.
 Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
 
+Rom-API-et er read-only og tilbyr `GET /rooms` og
+`GET /rooms/{roomNumber}`. Romresponsen inneholder romnummer, størrelse i
+kvadratmeter, antall senger (1, 2 eller 4), balkongflagg og siste renoveringsår.
+
 `service` bruker Spring Data JPA, Flyway 12.4.0, PostgreSQL-modulen for Flyway
 og PostgreSQL JDBC 42.7.13. `V1__create_person_table.sql` oppretter tabellen
 `person` med identity-ID, navn, avdeling, e-post, telefonnummer, kjønn og
@@ -185,6 +189,12 @@ unik uavhengig av store/små bokstaver. `V2__seed_person_table.sql` legger inn
 ti deterministiske, fiktive personer. Flyway kjører seedingen bare ved første
 initialisering, slik at vanlig omstart ikke overskriver, gjenoppretter eller
 dupliserer data. Reset av databasevolumet gjenoppretter de opprinnelige dataene.
+
+`V3__create_room_table.sql` oppretter `room` med romnummer som primærnøkkel,
+størrelse, antall senger, balkongflagg og siste renoveringsår.
+`V4__seed_room_table.sql` legger inn 20 deterministiske rom med en blanding av
+enerom, tomannsrom og firemannsrom. Flyways migreringshistorikk gjør at rommene
+ikke dupliseres eller gjenopprettes ved vanlig omstart.
 
 `Person` er både personmodell og JPA-entitet. `PersonRepository` arver
 `JpaRepository`; `save` legger til personer, mens `findPersonById` og `findAll`
@@ -205,6 +215,12 @@ transaksjoner. `PersonController` implementerer det genererte `PersonApi`-
 grensesnittet og håndterer bare HTTP-responsene. Servicelaget har isolerte
 enhetstester med mocket repository, og controllerens HTTP-oppførsel og
 inputvalidering er testet separat.
+
+`RoomRepository` bruker JPQL for detaljoppslag og sortert liste. `RoomService`
+eier read-only-transaksjonene og mapper til generert DTO, mens `RoomController`
+implementerer `RoomApi`. Romlaget har enhets- og HTTP-tester; repositorytesten
+kjøres sammen med de øvrige databaseintegrasjonstestene når testdatabasen er
+konfigurert.
 
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
 `service/Dockerfile` pakker Maven-byggets JAR i

@@ -8,6 +8,8 @@ tags:
     description: Livssjekk for applikasjonen.
   - name: Person
     description: Oppretting og uthenting av personer.
+  - name: Room
+    description: Uthenting av rom og romdetaljer.
 paths:
   /health:
     get:
@@ -84,6 +86,45 @@ paths:
                 $ref: '#/components/schemas/PersonResponse'
         '404':
           description: Personen finnes ikke.
+  /rooms:
+    get:
+      tags: [Room]
+      operationId: listRooms
+      summary: Henter alle rom.
+      responses:
+        '200':
+          description: Alle rom, sortert på romnummer.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomResponse'
+  /rooms/{roomNumber}:
+    get:
+      tags: [Room]
+      operationId: getRoom
+      summary: Henter detaljer om ett rom.
+      parameters:
+        - name: roomNumber
+          in: path
+          required: true
+          description: Romnummeret.
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+      responses:
+        '200':
+          description: Rommet med angitt romnummer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+        '400':
+          description: Romnummeret er ugyldig.
+        '404':
+          description: Rommet finnes ikke.
 components:
   schemas:
     HealthResponse:
@@ -161,3 +202,31 @@ components:
           type: string
           format: date
           example: '2026-09-15'
+    RoomResponse:
+      type: object
+      required: [roomNumber, sizeSquareMeters, numberOfBeds, hasBalcony, lastRenovatedYear]
+      properties:
+        roomNumber:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 204
+        sizeSquareMeters:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 28
+        numberOfBeds:
+          type: integer
+          format: int32
+          enum: [1, 2, 4]
+          example: 2
+        hasBalcony:
+          type: boolean
+          example: true
+        lastRenovatedYear:
+          type: integer
+          format: int32
+          minimum: 1900
+          maximum: 2100
+          example: 2024
