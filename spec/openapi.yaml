@@ -46,7 +46,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActivityResponse'
+                $ref: '#/components/schemas/ActivityDetailsResponse'
         '400':
           description: Ugyldig aktivitets-ID.
         '404':
@@ -167,6 +167,17 @@ paths:
           description: Rommet finnes ikke.
 components:
   schemas:
+    ActivityDetailsResponse:
+      allOf:
+        - $ref: '#/components/schemas/ActivityResponse'
+        - type: object
+          required: [participants]
+          properties:
+            participants:
+              type: array
+              description: Deltakere sortert på person-ID. Tom liste når ingen deltar.
+              items:
+                $ref: '#/components/schemas/PersonResponse'
     ActivityResponse:
       type: object
       description: En aktivitet varer fra og med 2 til og med 8 timer.
@@ -210,6 +221,11 @@ components:
         - $ref: '#/components/schemas/PersonResponse'
         - type: object
           properties:
+            activity:
+              description: Personens aktivitet. Null eller utelatt når personen ikke har en aktivitet.
+              nullable: true
+              allOf:
+                - $ref: '#/components/schemas/ActivityResponse'
             assignedRoom:
               description: Tildelt rom. Null eller utelatt hvis personen ikke har rom.
               nullable: true
