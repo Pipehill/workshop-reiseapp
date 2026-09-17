@@ -1,21 +1,21 @@
 openapi: 3.0.4
 info:
-  title: Reiseapp API
+  title: Travel App API
   version: 0.1.0
-  description: API-kontrakt for reiseappen.
+  description: API contract for the travel app.
 tags:
   - name: Participation
-    description: Påmelding og avmelding av personer til aktiviteter.
+    description: Activity enrollment and cancellation for persons.
   - name: Accommodation
-    description: Tildeling og fjerning av rom for personer.
+    description: Room assignment and removal for persons.
   - name: Activity
-    description: Uthenting av aktiviteter og praktiske råd.
+    description: Retrieval of activities and practical advice.
   - name: Health
-    description: Livssjekk for applikasjonen.
+    description: Application liveness check.
   - name: Person
-    description: Oppretting og uthenting av personer.
+    description: Creation and retrieval of persons.
   - name: Room
-    description: Uthenting av rom og romdetaljer.
+    description: Retrieval of rooms and room details.
 paths:
   /persons/{personId}/activity:
     parameters:
@@ -29,11 +29,11 @@ paths:
     put:
       tags: [Participation]
       operationId: enrollInActivity
-      summary: Melder personen på en aktivitet.
+      summary: Enrolls a person in an activity.
       description: >
-        Bytter aktivitet hvis personen allerede er påmeldt en annen aktivitet.
-        Ved feil beholdes eksisterende påmelding. Gjentatt påmelding til samme
-        aktivitet lykkes uten endringer, også når aktiviteten er full.
+        Switches activities if the person is already enrolled in another activity.
+        If the request fails, the existing enrollment is preserved. Repeated enrollment
+        in the same activity succeeds without changes, even when the activity is full.
       requestBody:
         required: true
         content:
@@ -42,25 +42,25 @@ paths:
               $ref: '#/components/schemas/EnrollInActivityRequest'
       responses:
         '204':
-          description: Personen er påmeldt aktiviteten.
+          description: The person is enrolled in the activity.
         '400':
-          description: Ugyldig person-ID eller aktivitets-ID.
+          description: Invalid person ID or activity ID.
         '404':
-          description: Personen eller aktiviteten finnes ikke.
+          description: The person or activity does not exist.
         '409':
-          description: Aktiviteten er full. Eksisterende påmelding er uendret.
+          description: The activity is full. The existing enrollment is unchanged.
     delete:
       tags: [Participation]
       operationId: cancelActivityEnrollment
-      summary: Melder personen av aktiviteten.
-      description: Lykkes også når personen ikke er påmeldt noen aktivitet.
+      summary: Cancels the person's activity enrollment.
+      description: Also succeeds when the person is not enrolled in any activity.
       responses:
         '204':
-          description: Personen er ikke påmeldt noen aktivitet.
+          description: The person is not enrolled in any activity.
         '400':
-          description: Ugyldig person-ID.
+          description: Invalid person ID.
         '404':
-          description: Personen finnes ikke.
+          description: The person does not exist.
   /persons/{personId}/room:
     parameters:
       - name: personId
@@ -73,11 +73,11 @@ paths:
     put:
       tags: [Accommodation]
       operationId: assignRoom
-      summary: Tildeler et rom til en person.
+      summary: Assigns a room to a person.
       description: >
-        Flytter personen hvis vedkommende har et annet rom. Rommet må ha en
-        ledig seng. Ved feil beholdes eksisterende tildeling. Gjentatt tildeling
-        til samme rom lykkes uten endringer, også når rommet er fullt.
+        Moves the person if they already have another room. The room must have an
+        available bed. If the request fails, the existing assignment is preserved. Repeated assignment
+        to the same room succeeds without changes, even when the room is full.
       requestBody:
         required: true
         content:
@@ -86,33 +86,33 @@ paths:
               $ref: '#/components/schemas/AssignRoomRequest'
       responses:
         '204':
-          description: Personen er tildelt rommet.
+          description: The person is assigned to the room.
         '400':
-          description: Ugyldig person-ID eller romnummer.
+          description: Invalid person ID or room number.
         '404':
-          description: Personen eller rommet finnes ikke.
+          description: The person or room does not exist.
         '409':
-          description: Rommet er fullt. Eksisterende tildeling er uendret.
+          description: The room is full. The existing assignment is unchanged.
     delete:
       tags: [Accommodation]
       operationId: removeRoomAssignment
-      summary: Fjerner personens romtildeling.
-      description: Lykkes også når personen allerede er uten rom.
+      summary: Removes the person's room assignment.
+      description: Also succeeds when the person has no room assignment.
       responses:
         '204':
-          description: Personen har ingen romtildeling.
+          description: The person has no room assignment.
         '400':
-          description: Ugyldig person-ID.
+          description: Invalid person ID.
         '404':
-          description: Personen finnes ikke.
+          description: The person does not exist.
   /activities:
     get:
       tags: [Activity]
       operationId: listActivities
-      summary: Henter alle aktiviteter.
+      summary: Retrieves all activities.
       responses:
         '200':
-          description: Alle aktiviteter sortert på starttidspunkt og deretter ID.
+          description: All activities, sorted by start time and then ID.
           content:
             application/json:
               schema:
@@ -123,7 +123,7 @@ paths:
     get:
       tags: [Activity]
       operationId: getActivity
-      summary: Henter detaljer om en aktivitet.
+      summary: Retrieves activity details.
       parameters:
         - name: activityId
           in: path
@@ -134,24 +134,24 @@ paths:
             minimum: 1
       responses:
         '200':
-          description: Aktiviteten med angitt ID.
+          description: The activity with the specified ID.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActivityDetailsResponse'
         '400':
-          description: Ugyldig aktivitets-ID.
+          description: Invalid activity ID.
         '404':
-          description: Aktiviteten finnes ikke.
+          description: The activity does not exist.
   /health:
     get:
       tags: [Health]
       operationId: health
-      summary: Kontrollerer at API-et kan svare.
-      description: Livssjekk for applikasjonen. Kontrollerer ikke databasetilkoblingen.
+      summary: Checks whether the API can respond.
+      description: Application liveness check. Does not check the database connection.
       responses:
         '200':
-          description: API-et svarer.
+          description: The API is responding.
           content:
             application/json:
               schema:
@@ -160,10 +160,10 @@ paths:
     get:
       tags: [Person]
       operationId: listPersons
-      summary: Henter alle registrerte personer.
+      summary: Retrieves all registered persons.
       responses:
         '200':
-          description: Alle registrerte personer, sortert på ID.
+          description: All registered persons, sorted by ID.
           content:
             application/json:
               schema:
@@ -173,7 +173,7 @@ paths:
     post:
       tags: [Person]
       operationId: createPerson
-      summary: Registrerer en ny person.
+      summary: Registers a new person.
       requestBody:
         required: true
         content:
@@ -182,10 +182,10 @@ paths:
               $ref: '#/components/schemas/CreatePersonRequest'
       responses:
         '201':
-          description: Personen ble registrert.
+          description: The person was registered.
           headers:
             Location:
-              description: Relativ URI til den registrerte personen.
+              description: Relative URI of the registered person.
               schema:
                 type: string
                 format: uri-reference
@@ -194,38 +194,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/PersonResponse'
         '400':
-          description: Forespørselen er ugyldig.
+          description: The request is invalid.
   /persons/{personId}:
     get:
       tags: [Person]
       operationId: getPerson
-      summary: Henter én registrert person.
+      summary: Retrieves a registered person.
       parameters:
         - name: personId
           in: path
           required: true
-          description: Personens ID.
+          description: The person's ID.
           schema:
             type: integer
             format: int64
             minimum: 1
       responses:
         '200':
-          description: Personen som har angitt ID.
+          description: The person with the specified ID.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PersonDetailsResponse'
         '404':
-          description: Personen finnes ikke.
+          description: The person does not exist.
   /rooms:
     get:
       tags: [Room]
       operationId: listRooms
-      summary: Henter alle rom.
+      summary: Retrieves all rooms.
       responses:
         '200':
-          description: Alle rom, sortert på romnummer.
+          description: All rooms, sorted by room number.
           content:
             application/json:
               schema:
@@ -236,27 +236,27 @@ paths:
     get:
       tags: [Room]
       operationId: getRoom
-      summary: Henter detaljer om ett rom.
+      summary: Retrieves room details.
       parameters:
         - name: roomNumber
           in: path
           required: true
-          description: Romnummeret.
+          description: The room number.
           schema:
             type: integer
             format: int32
             minimum: 1
       responses:
         '200':
-          description: Rommet med angitt romnummer.
+          description: The room with the specified room number.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomDetailsResponse'
         '400':
-          description: Romnummeret er ugyldig.
+          description: The room number is invalid.
         '404':
-          description: Rommet finnes ikke.
+          description: The room does not exist.
 components:
   schemas:
     EnrollInActivityRequest:
@@ -285,12 +285,12 @@ components:
           properties:
             participants:
               type: array
-              description: Deltakere sortert på person-ID. Tom liste når ingen deltar.
+              description: Participants sorted by person ID. An empty list when there are no participants.
               items:
                 $ref: '#/components/schemas/PersonResponse'
     ActivityResponse:
       type: object
-      description: En aktivitet varer fra og med 2 til og med 8 timer.
+      description: An activity lasts between 2 and 8 hours, inclusive.
       required: [id, title, description, maxParticipants, startTime, endTime, notes]
       properties:
         id:
@@ -302,11 +302,11 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-          example: Fjelltur til utsiktspunktet
+          example: Mountain hike to the viewpoint
         description:
           type: string
           minLength: 1
-          example: Guidet fjelltur med matpause og utsikt over fjorden.
+          example: Guided mountain hike with a meal break and views of the fjord.
         maxParticipants:
           type: integer
           format: int32
@@ -315,29 +315,29 @@ components:
         startTime:
           type: string
           pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'
-          description: Startklokkeslett i format HH:mm:ss.
+          description: Start time in HH:mm:ss format.
           example: '09:00:00'
         endTime:
           type: string
           pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'
-          description: Sluttklokkeslett i format HH:mm:ss, 2–8 timer etter start samme dag.
+          description: End time in HH:mm:ss format, 2–8 hours after the start on the same day.
           example: '15:00:00'
         notes:
           type: string
-          description: Fritekst med praktiske råd og utstyr deltakeren bør huske. Tom streng hvis det ikke finnes råd.
-          example: Ta med varme klær og gode tursko. Pakk mat og vann i en sekk.
+          description: Free text with practical advice and equipment to bring. An empty string when there is no advice.
+          example: Bring warm clothing and sturdy hiking shoes. Pack food and water in a backpack.
     PersonDetailsResponse:
       allOf:
         - $ref: '#/components/schemas/PersonResponse'
         - type: object
           properties:
             activity:
-              description: Personens aktivitet. Null eller utelatt når personen ikke har en aktivitet.
+              description: The person's activity. Null or omitted when the person has no activity.
               nullable: true
               allOf:
                 - $ref: '#/components/schemas/ActivityResponse'
             assignedRoom:
-              description: Tildelt rom. Null eller utelatt hvis personen ikke har rom.
+              description: The assigned room. Null or omitted when the person has no room.
               nullable: true
               allOf:
                 - $ref: '#/components/schemas/RoomResponse'
@@ -348,7 +348,7 @@ components:
           required: [persons]
           properties:
             persons:
-              description: Tildelte personer sortert på ID. Tom liste for ledige rom.
+              description: Assigned persons sorted by ID. An empty list for unoccupied rooms.
               type: array
               items:
                 $ref: '#/components/schemas/PersonResponse'
@@ -368,17 +368,17 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-          example: Vennlige Foss
+          example: Friendly Falls
         department:
           type: string
           minLength: 1
           maxLength: 100
-          example: Produkt
+          example: Product
         email:
           type: string
           format: email
           maxLength: 254
-          example: vennlige.foss@reiseapp.test
+          example: friendly.falls@reiseapp.test
         phoneNumber:
           type: string
           minLength: 1
@@ -388,7 +388,7 @@ components:
           type: string
           minLength: 1
           maxLength: 50
-          example: kvinne
+          example: female
     PersonResponse:
       type: object
       required: [id, name, department, email, phoneNumber, gender, registrationDate]
@@ -402,17 +402,17 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-          example: Vennlige Foss
+          example: Friendly Falls
         department:
           type: string
           minLength: 1
           maxLength: 100
-          example: Produkt
+          example: Product
         email:
           type: string
           format: email
           maxLength: 254
-          example: vennlige.foss@reiseapp.test
+          example: friendly.falls@reiseapp.test
         phoneNumber:
           type: string
           minLength: 1
@@ -422,7 +422,7 @@ components:
           type: string
           minLength: 1
           maxLength: 50
-          example: kvinne
+          example: female
         registrationDate:
           type: string
           format: date

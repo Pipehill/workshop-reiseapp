@@ -129,6 +129,9 @@ API-nøkler eller tilgangskontroll med mindre det blir uttrykkelig bestilt.
 
 ## Arbeidsflyt for API-endringer
 
+OpenAPI-spesifikasjonen skal være på engelsk, inkludert beskrivelser,
+oppsummeringer og eksempelverdier. Eksisterende API-identifikatorer bevares.
+
 1. Beskriv eller oppdater kontrakten i OpenAPI-spesifikasjonen først.
 2. Generer API-koden gjennom Maven. Ikke rediger genererte filer manuelt.
 3. Implementer oppførselen i håndskrevet Kotlin-kode adskilt fra generert kode.
