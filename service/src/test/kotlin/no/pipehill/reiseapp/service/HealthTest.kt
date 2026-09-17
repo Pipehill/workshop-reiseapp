@@ -5,6 +5,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import no.pipehill.reiseapp.service.person.PersonRepository
+import no.pipehill.reiseapp.service.accommodation.PersonRoomRepository
 import no.pipehill.reiseapp.service.room.RoomRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -27,6 +28,9 @@ class HealthTest {
 
     @MockitoBean
     private lateinit var roomRepository: RoomRepository
+
+    @MockitoBean
+    private lateinit var assignments: PersonRoomRepository
 
     @LocalServerPort
     private var port: Int = 0

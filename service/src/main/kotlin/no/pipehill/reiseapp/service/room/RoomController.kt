@@ -2,6 +2,7 @@ package no.pipehill.reiseapp.service.room
 
 import no.pipehill.reiseapp.api.RoomApi
 import no.pipehill.reiseapp.api.dto.RoomResponse
+import no.pipehill.reiseapp.api.dto.RoomDetailsResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController
 class RoomController(
     private val service: RoomService,
 ) : RoomApi {
-    override fun getRoom(roomNumber: Int): ResponseEntity<RoomResponse> =
+    override fun getRoom(roomNumber: Int): ResponseEntity<RoomDetailsResponse> =
         service.findByNumber(roomNumber)
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()

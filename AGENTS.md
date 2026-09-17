@@ -222,6 +222,20 @@ implementerer `RoomApi`. Romlaget har enhets- og HTTP-tester; repositorytesten
 kjøres sammen med de øvrige databaseintegrasjonstestene når testdatabasen er
 konfigurert.
 
+Romfordeling lagres i `person_room` via JPA-entiteten `PersonRoom`.
+V5 oppretter tabellen med person-ID som primærnøkkel (høyst ett rom per person),
+fremmednøkler og indeks på romnummer. V6 seeder ti koblinger til fem rom innenfor
+sengekapasiteten, ved oppslag på startpersonenes e-postadresser.
+`PersonRoomRepository` tilbyr eksplisitte JPQL-spørringer i begge retninger.
+`PersonService.findById` returnerer `PersonDetailsResponse` med valgfri
+`assignedRoom`; `RoomService.findByNumber` returnerer `RoomDetailsResponse`
+med `persons` sortert på ID (tom liste for ledige rom). Nestede objekter bruker
+grunnresponsene uten tilbakekobling. Liste- og opprettingsresponsene er uendret;
+bare detaljoppslag henter koblingene. Ingen nye endepunkter er innført.
+Verifisert 17. september 2026 med `mvn clean verify` mot en isolert PostgreSQL
+18.6-container: alle 19 tester bestod, inkludert V1–V6, Hibernate-validering,
+JPQL-oppslag i begge retninger og kontroll av seedet sengekapasitet.
+
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
 `service/Dockerfile` pakker Maven-byggets JAR i
 `docker.io/library/eclipse-temurin:25.0.4_7-jre-noble` (Linux JRE 25.0.4+7,

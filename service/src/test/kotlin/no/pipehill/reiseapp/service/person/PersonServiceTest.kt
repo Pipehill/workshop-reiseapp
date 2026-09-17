@@ -3,6 +3,8 @@ package no.pipehill.reiseapp.service.person
 import java.time.LocalDate
 import no.pipehill.reiseapp.api.dto.CreatePersonRequest
 import no.pipehill.reiseapp.api.dto.PersonResponse
+import no.pipehill.reiseapp.service.accommodation.PersonRoomRepository
+import no.pipehill.reiseapp.service.room.Room
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -17,11 +19,14 @@ class PersonServiceTest {
     @Mock
     private lateinit var repository: PersonRepository
 
+    @Mock
+    private lateinit var assignments: PersonRoomRepository
+
     private lateinit var service: PersonService
 
     @BeforeEach
     fun setUp() {
-        service = PersonService(repository)
+        service = PersonService(repository, assignments)
     }
 
     @Test
@@ -49,12 +54,32 @@ class PersonServiceTest {
         Mockito.`when`(repository.findPersonById(Long.MAX_VALUE)).thenReturn(null)
         Mockito.`when`(repository.findAll()).thenReturn(listOf(firstPerson, secondPerson))
 
-        assertThat(service.findById(1)).isEqualTo(personResponse(id = 1))
+        assertThat(service.findById(1)).usingRecursiveComparison()
+            .ignoringFields("assignedRoom").isEqualTo(personResponse(id = 1))
+        assertThat(service.findById(1)?.assignedRoom).isNull()
         assertThat(service.findById(Long.MAX_VALUE)).isNull()
+        Mockito.verify(assignments, Mockito.never()).findRoomByPersonId(Long.MAX_VALUE)
         assertThat(service.findAll()).containsExactly(
             personResponse(id = 1),
             personResponse(id = 2),
         )
+    }
+
+    @Test
+    fun `loads assigned room only for person details`() {
+        Mockito.`when`(repository.findPersonById(1)).thenReturn(person(id = 1))
+        Mockito.`when`(assignments.findRoomByPersonId(1)).thenReturn(Room(104, 22, 2, false, 2024))
+
+        val result = service.findById(1)
+
+        assertThat(result?.assignedRoom?.roomNumber).isEqualTo(104)
+        assertThat(result?.assignedRoom?.sizeSquareMeters).isEqualTo(22)
+        assertThat(result?.assignedRoom?.numberOfBeds?.value).isEqualTo(2)
+        assertThat(result?.assignedRoom?.hasBalcony).isFalse()
+        assertThat(result?.assignedRoom?.lastRenovatedYear).isEqualTo(2024)
+        Mockito.clearInvocations(assignments)
+        service.findAll()
+        Mockito.verifyNoInteractions(assignments)
     }
 
     private fun createRequest(): CreatePersonRequest =

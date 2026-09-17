@@ -268,6 +268,17 @@ Feltene valideres ut fra reglene i OpenAPI-kontrakten før servicelaget kalles.
 
 ## Rom-API
 
+Detaljoppslagene inkluderer romfordelingen:
+
+- `GET /persons/{personId}` har `assignedRoom` med rommets opplysninger.
+  Feltet er null eller utelatt når personen ikke har et tildelt rom.
+- `GET /rooms/{roomNumber}` har `persons` med personopplysninger sortert på ID.
+  Rom uten tildelte personer gir en tom liste.
+
+Listeendepunktene og oppretting av personer beholder dagens responsformat.
+Nye personer får ikke automatisk et rom. De nestede objektene inneholder bare
+grunnopplysninger, slik at responsene ikke blir rekursive.
+
 | Metode og sti | Respons |
 | --- | --- |
 | `GET /rooms` | HTTP 200 med alle rom sortert på romnummer |
@@ -385,7 +396,15 @@ primærnøkkel og regler for positive størrelser, støttede sengantall og plaus
 renoveringsår. `V4__seed_room_table.sql` legger inn 20 rom fordelt på enerom,
 tomannsrom og firemannsrom, med varierte størrelser, balkonger og renoveringsår.
 
-En eksplisitt reset av databasevolumet kjører V1–V4 på nytt og gir den
+`V5__create_person_room_table.sql` oppretter koblingstabellen `person_room`.
+Person-ID er primærnøkkel, så en person kan ha høyst ett rom. Begge kolonnene
+har fremmednøkler; sletting av en person fjerner også koblingen.
+`V6__seed_person_room_table.sql` knytter de ti startpersonene til rom 101, 102,
+104, 108 og 204 innenfor sengekapasiteten. Seedingen matcher eksisterende personer
+på e-post og gjenoppretter ikke slettede personer eller rom. Den kjøres bare én
+gang gjennom Flyway, også ved oppgradering av eksisterende databaser.
+
+En eksplisitt reset av databasevolumet kjører V1–V6 på nytt og gir den
 opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
 Spring Boot 4.1.1 dependency management.
 
@@ -412,6 +431,10 @@ read-only-transaksjoner.
 `RoomService` mapper rom til den genererte respons-DTO-en og bruker read-only-
 transaksjoner. `RoomController` implementerer det genererte `RoomApi`-
 grensesnittet og returnerer HTTP 404 når romnummeret ikke finnes.
+
+Begge servicelagene bruker `PersonRoomRepository` ved detaljoppslag.
+Repositoryet henter tildelt rom eller personene på rommet med eksplisitt JPQL.
+Listeoppslag laster ikke koblinger. Ingen nye endepunkter er lagt til.
 
 PostgreSQL-imaget er låst til `docker.io/library/postgres:18.6-trixie`.
 [PostgreSQL 18.6](https://www.postgresql.org/docs/18/release-18-6.html) er valgt
