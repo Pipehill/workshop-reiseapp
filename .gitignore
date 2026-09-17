@@ -5,6 +5,9 @@ target/
 # Log file
 *.log
 
+# Temporary files and local build logs
+/tmp/
+
 # BlueJ files
 *.ctxt
 
