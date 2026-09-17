@@ -139,6 +139,12 @@ API-nøkler eller tilgangskontroll med mindre det blir uttrykkelig bestilt.
 Spesifikasjonen er kilden til sannhet for API-kontrakten. Kodegenerering,
 kompilering og tester skal kunne kjøres fra en ren utsjekking i CI.
 
+## Midlertidige filer og logger
+
+Legg logger som opprettes under arbeidet i repoets `tmp/`-katalog, for eksempel
+`mvn clean verify -l tmp/build.log`. Katalogen er ignorert av Git.
+Rydd bort midlertidige logger når de ikke lenger trengs.
+
 ## Commit-beskjeder
 
 - Start commit-beskjeder med et beskrivende prefiks i store bokstaver og
