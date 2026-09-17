@@ -174,7 +174,7 @@ Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
 `spec/openapi.yaml` og modulen `api`. Modulen validerer kontrakten
 og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
 Modulen `service` implementerer `HealthApi`, `PersonApi`, `RoomApi`,
-`ActivityApi` og `AccommodationApi`. `GET /health` svarer
+`ActivityApi`, `AccommodationApi` og `ParticipationApi`. `GET /health` svarer
 med HTTP 200 og `{"status":"UP"}`. Dette er en livssjekk for API-et og kontrollerer
 ikke databasetilkoblingen. Det tidligere `/ping`-endepunktet er fjernet.
 Person-API-et tilbyr `GET /persons`,
@@ -289,6 +289,20 @@ som liste av `PersonResponse`, sortert på person-ID, tom ved ingen deltakere.
 Listene returnerer grunnopplysninger uten koblinger. `PersonService` og
 `ActivityService` henter koblingene fra `PersonActivityRepository` med JPQL.
 Databasetester verifiserer kardinalitet, fremmednøkler og begge oppslagsretninger.
+
+`ParticipationController` implementerer `ParticipationApi` med
+`PUT /persons/{personId}/activity` (`EnrollInActivityRequest.activityId`) og
+`DELETE /persons/{personId}/activity`. `ParticipationService` returnerer
+resultater som controlleren mapper til 204, 404 eller 409; inputvalidering gir 400.
+PUT bytter aktivitet atomisk og bevarer gammel påmelding ved fullt mål (409).
+Gjentatt PUT til samme aktivitet og DELETE uten påmelding gir 204.
+Service bruker READ_COMMITTED, låser personen først og deretter berørte aktiviteter
+i stigende ID-rekkefølge. Kapasiteten telles etter låsing, og låsene holdes til
+commit. Alle påmeldingsendringer må følge samme låseregime.
+Ingen skjemaendringer er nødvendige. Verifisert med `mvn clean verify` mot
+isolert PostgreSQL 18.6: alle 51 tester bestod, inkludert konkurranse om siste
+plass, samme persons samtidige påmeldinger, motsatte aktivitetsbytter,
+avmelding, uendret påmelding ved feil og HTTP-validering.
 
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
 `service/Dockerfile` pakker Maven-byggets JAR i

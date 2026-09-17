@@ -36,6 +36,9 @@ class HealthTest {
     private var port: Int = 0
 
     @MockitoBean
+    private lateinit var enrollment: no.pipehill.reiseapp.service.activity.ParticipationService
+
+    @MockitoBean
     private lateinit var accommodation: no.pipehill.reiseapp.service.accommodation.AccommodationService
 
     @MockitoBean

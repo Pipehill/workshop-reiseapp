@@ -4,6 +4,8 @@ info:
   version: 0.1.0
   description: API-kontrakt for reiseappen.
 tags:
+  - name: Participation
+    description: Påmelding og avmelding av personer til aktiviteter.
   - name: Accommodation
     description: Tildeling og fjerning av rom for personer.
   - name: Activity
@@ -15,6 +17,50 @@ tags:
   - name: Room
     description: Uthenting av rom og romdetaljer.
 paths:
+  /persons/{personId}/activity:
+    parameters:
+      - name: personId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    put:
+      tags: [Participation]
+      operationId: enrollInActivity
+      summary: Melder personen på en aktivitet.
+      description: >
+        Bytter aktivitet hvis personen allerede er påmeldt en annen aktivitet.
+        Ved feil beholdes eksisterende påmelding. Gjentatt påmelding til samme
+        aktivitet lykkes uten endringer, også når aktiviteten er full.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollInActivityRequest'
+      responses:
+        '204':
+          description: Personen er påmeldt aktiviteten.
+        '400':
+          description: Ugyldig person-ID eller aktivitets-ID.
+        '404':
+          description: Personen eller aktiviteten finnes ikke.
+        '409':
+          description: Aktiviteten er full. Eksisterende påmelding er uendret.
+    delete:
+      tags: [Participation]
+      operationId: cancelActivityEnrollment
+      summary: Melder personen av aktiviteten.
+      description: Lykkes også når personen ikke er påmeldt noen aktivitet.
+      responses:
+        '204':
+          description: Personen er ikke påmeldt noen aktivitet.
+        '400':
+          description: Ugyldig person-ID.
+        '404':
+          description: Personen finnes ikke.
   /persons/{personId}/room:
     parameters:
       - name: personId
@@ -213,6 +259,15 @@ paths:
           description: Rommet finnes ikke.
 components:
   schemas:
+    EnrollInActivityRequest:
+      type: object
+      required: [activityId]
+      properties:
+        activityId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
     AssignRoomRequest:
       type: object
       required: [roomNumber]

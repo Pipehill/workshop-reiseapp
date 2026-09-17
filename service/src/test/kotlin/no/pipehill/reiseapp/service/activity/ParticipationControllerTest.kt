@@ -1,4 +1,4 @@
-package no.pipehill.reiseapp.service.accommodation
+package no.pipehill.reiseapp.service.activity
 
 import java.net.URI
 import java.net.http.HttpClient
@@ -22,9 +22,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
             "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration",
     ],
 )
-class AccommodationControllerTest {
+class ParticipationControllerTest {
     @MockitoBean
-    private lateinit var service: AccommodationService
+    private lateinit var service: ParticipationService
     @MockitoBean
     private lateinit var persons: PersonService
     @MockitoBean
@@ -35,18 +35,18 @@ class AccommodationControllerTest {
     private var port: Int = 0
 
     @MockitoBean
-    private lateinit var enrollment: no.pipehill.reiseapp.service.activity.ParticipationService
+    private lateinit var accommodation: no.pipehill.reiseapp.service.accommodation.AccommodationService
 
     @Test
     fun `assignment returns success not found or conflict`() {
         for ((result, status) in listOf(
-            RoomAssignmentResult.SUCCESS to 204,
-            RoomAssignmentResult.PERSON_NOT_FOUND to 404,
-            RoomAssignmentResult.ROOM_NOT_FOUND to 404,
-            RoomAssignmentResult.ROOM_FULL to 409,
+            ActivityEnrollmentResult.SUCCESS to 204,
+            ActivityEnrollmentResult.PERSON_NOT_FOUND to 404,
+            ActivityEnrollmentResult.ACTIVITY_NOT_FOUND to 404,
+            ActivityEnrollmentResult.ACTIVITY_FULL to 409,
         )) {
-            Mockito.`when`(service.assignRoom(1, 106)).thenReturn(result)
-            val response = request("PUT", "1", """{"roomNumber":106}""")
+            Mockito.`when`(service.enrollInActivity(1, 106)).thenReturn(result)
+            val response = request("PUT", "1", """{"activityId":106}""")
             assertThat(response.statusCode()).isEqualTo(status)
             assertThat(response.body()).isEmpty()
         }
@@ -54,20 +54,20 @@ class AccommodationControllerTest {
 
     @Test
     fun `removal returns success or missing person`() {
-        Mockito.`when`(service.removeRoomAssignment(1)).thenReturn(RoomAssignmentResult.SUCCESS)
-        Mockito.`when`(service.removeRoomAssignment(999)).thenReturn(RoomAssignmentResult.PERSON_NOT_FOUND)
+        Mockito.`when`(service.cancelActivityEnrollment(1)).thenReturn(ActivityEnrollmentResult.SUCCESS)
+        Mockito.`when`(service.cancelActivityEnrollment(999)).thenReturn(ActivityEnrollmentResult.PERSON_NOT_FOUND)
         assertThat(request("DELETE", "1").statusCode()).isEqualTo(204)
         assertThat(request("DELETE", "999").statusCode()).isEqualTo(404)
     }
 
     @Test
     fun `invalid input never reaches service`() {
-        for (body in listOf("{}", """{"roomNumber":0}""", """{"roomNumber":-1}""",
-            """{"roomNumber":null}""", """{"roomNumber":"invalid"}""", "{", "")) {
+        for (body in listOf("{}", """{"activityId":0}""", """{"activityId":-1}""",
+            """{"activityId":null}""", """{"activityId":"invalid"}""", "{", "")) {
             assertThat(request("PUT", "1", body).statusCode()).isEqualTo(400)
         }
         for (id in listOf("0", "-1", "abc")) {
-            assertThat(request("PUT", id, """{"roomNumber":106}""").statusCode()).isEqualTo(400)
+            assertThat(request("PUT", id, """{"activityId":106}""").statusCode()).isEqualTo(400)
             assertThat(request("DELETE", id).statusCode()).isEqualTo(400)
         }
         Mockito.verifyNoInteractions(service)
@@ -76,7 +76,7 @@ class AccommodationControllerTest {
     private fun request(method: String, id: String, body: String = ""): HttpResponse<String> =
         HttpClient.newHttpClient().use { client ->
             client.send(
-                HttpRequest.newBuilder(URI("http://localhost:$port/persons/$id/room"))
+                HttpRequest.newBuilder(URI("http://localhost:$port/persons/$id/activity"))
                     .header("Content-Type", "application/json")
                     .method(method, HttpRequest.BodyPublishers.ofString(body)).build(),
                 HttpResponse.BodyHandlers.ofString(),

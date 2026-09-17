@@ -320,7 +320,7 @@ praktiske råd og utstyr, tom streng hvis det ikke finnes råd).
 Tidene er klokkeslett i format `HH:mm:ss`, for eksempel `09:00:00`.
 Varigheten er mellom 2 og 8 timer,
 inkludert grensene, og slutt må være etter start samme dag.
-Det finnes ingen skriveendepunkter for aktiviteter.
+Det finnes ingen endepunkter for å opprette eller endre selve aktivitetene.
 
 Flyway V7 oppretter `activity` med `notes` som fritekstfelt. Databasen håndhever
 positiv kapasitet, varighet og ikke-blanke tekstfelt. V8 seeder fem aktiviteter
@@ -344,7 +344,24 @@ fire på hver av aktivitet 1–4 og to på aktivitet 5. Person 9 og 10 har ingen
 aktivitet. Alle ti nye personer (ID 11–20) har både rom og aktivitet.
 Seedingen holder seg innenfor maksantall deltakere.
 `PersonService` og `ActivityService` henter koblingene ved detaljoppslag via
-JPQL i `PersonActivityRepository`. Ingen nye endepunkter er lagt til.
+JPQL i `PersonActivityRepository`.
+
+Påmelding og avmelding gjøres via personens aktivitetsressurs:
+
+| Metode og sti | Forespørsel | Respons |
+| --- | --- | --- |
+| `PUT /persons/{personId}/activity` | `{"activityId":1}` | 204 ved påmelding, 409 hvis aktiviteten er full |
+| `DELETE /persons/{personId}/activity` | Ingen body | 204 når personen er uten aktivitet |
+
+Ukjent person eller aktivitet gir 404, og ugyldige ID-er eller PUT-body gir 400.
+PUT bytter aktivitet atomisk hvis personen allerede deltar på en annen; ved
+avvisning beholdes den gamle påmeldingen. Gjentatt PUT til samme aktivitet
+lykkes også når den er full. DELETE lykkes også når personen ikke er påmeldt.
+Påmeldingene lagres i databasen og vises i person- og aktivitetsdetaljene.
+
+`ParticipationService` låser personen først, deretter gammel og ny aktivitet
+i stigende ID-rekkefølge. Kapasitet kontrolleres mens låsene holdes til commit,
+slik at samtidige forespørsler ikke kan overskride `maxParticipants`.
 
 ## Kjør med Podman eller Docker
 
