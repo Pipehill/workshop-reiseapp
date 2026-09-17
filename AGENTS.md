@@ -33,6 +33,11 @@ innebærer å endre dem. Utilsiktede feil skal fortsatt rettes.
 - API-kode genereres fra spesifikasjonen som del av Maven-bygget.
 - Koden skal ligge på GitHub.
 - GitHub Actions skal bygge og teste koden for hver pull request.
+- Eksterne GitHub Actions og gjenbrukbare workflows skal låses til full
+  commit-SHA (40 heksadesimale tegn), ikke branch eller tag, for å redusere
+  risikoen for supply chain-angrep gjennom flyttede referanser. Oppgi versjonen
+  i en kommentar ved `uses`. Verifiser SHA mot det offisielle repositoryet ved
+  innføring og oppdatering; oppdater SHA og versjonskommentar sammen.
 
 ## Versjoner av rammeverk og avhengigheter
 
@@ -89,8 +94,12 @@ ikke et krav om at deltakere har nøyaktig samme patchversjon. Dokumenter
 faktisk verifisert kompatibilitet når containeroppsettet er på plass.
 
 GitHub og GitHub Actions brukes som tjenester og har ingen prosjektstyrt
-produktversjon. Konkrete actions og eventuell Compose-provider velges og
-låses når CI- og containeroppsettet lages.
+produktversjon. CI bruker `actions/checkout` v7.0.1 og
+`actions/setup-java` v6.0.1, begge låst til full commit-SHA i workflowen.
+SHA-ene er verifisert mot taggene i de offisielle repositoryene med
+`git ls-remote`. Versjonene er kontrollert mot de offisielle utgivelsene
+17. september 2026: [checkout](https://github.com/actions/checkout/releases/tag/v7.0.1)
+og [setup-java](https://github.com/actions/setup-java/releases/tag/v6.0.1).
 
 ## Autentisering og autorisering
 
@@ -337,9 +346,16 @@ bygg og test, image-bygging, databasehelse, HTTP, SQL, stopp med bevart volum og
 gjenoppstart med bevarte data. Flyway V1 er verifisert mot PostgreSQL 18.6 med
 korrekte kolonner, regler og indeks samt en tilbakerullet testinnsetting. Flyway
 V2 er verifisert med ti startpersoner uten duplikater ved omstart. Docker Engine
-er ikke verifisert. CI er ikke opprettet.
+er ikke verifisert.
 
-Teknologiversjoner og generator er valgt i tabellen over. CI-actions er ennå
-ikke valgt.
+`.github/workflows/pull-request.yml` bygger og tester pull requests mot `main`
+med `mvn --batch-mode --no-transfer-progress clean verify` på Ubuntu 24.04.
+CI bruker Temurin 25.0.4+7, Maven 3.9.16 (nedlastet med SHA-512-kontroll)
+og PostgreSQL 18.6-trixie som separat servicecontainer. Alle tre
+`REISEAPP_TEST_DATABASE_*`-variablene settes slik at databasetestene aktiveres.
+Workflowen har bare lesetilgang til repoet, cacher Maven-avhengigheter og
+avbryter eldre kjøringer for samme PR. Kjøring på GitHub er ennå ikke verifisert.
+
+Teknologiversjoner og generator er valgt i tabellen over.
 Dokumenter de faktiske kommandoene for bygg, test og lokal kjøring når
 oppsettet er på plass, og verifiser versjonskombinasjonen da.
