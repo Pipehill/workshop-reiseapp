@@ -15,8 +15,9 @@ før de gjør endringer i prosjektet.
 - `service/`: kjørbar Spring Boot-tjeneste som implementerer API-grensesnittene.
 - `service/src/main/resources/db/migration/`: versjonerte Flyway-migreringer.
 
-Kontrakten inneholder `GET /health` samt endepunkter for å opprette og hente
-personer. API-grensesnitt og DTO-er genereres fra kontrakten.
+Kontrakten inneholder `GET /health`, endepunkter for å opprette og hente
+personer samt endepunkter for å hente rom. API-grensesnitt og DTO-er genereres
+fra kontrakten.
 
 ## Bygg
 
@@ -265,6 +266,18 @@ En opprettingsforespørsel inneholder navn, avdeling, e-post, telefonnummer og
 kjønn. ID og registreringsdato settes av applikasjonen og returneres i responsen.
 Feltene valideres ut fra reglene i OpenAPI-kontrakten før servicelaget kalles.
 
+## Rom-API
+
+| Metode og sti | Respons |
+| --- | --- |
+| `GET /rooms` | HTTP 200 med alle rom sortert på romnummer |
+| `GET /rooms/{roomNumber}` | HTTP 200 med rommet, HTTP 404 hvis det ikke finnes, eller HTTP 400 ved ugyldig romnummer |
+
+Et rom inneholder romnummer, størrelse i kvadratmeter, antall senger, balkongflagg
+og året rommet sist ble renovert. Antall senger er begrenset til 1, 2 eller 4.
+Romdataene er read-only; API-et har ingen endepunkter for å opprette eller endre
+rom.
+
 ## Kjør med Podman eller Docker
 
 Installer Podman (foretrukket) eller Docker med støtte for Linux-containere.
@@ -343,7 +356,7 @@ volumplasseringen for det offisielle PostgreSQL-imaget fra versjon 18. Vanlig
 `compose down` og run-skriptenes stoppkommando bevarer volumet og dataene.
 `compose down --volumes` er en eksplisitt, destruktiv reset som sletter alle
 lokale databasedata. Neste oppstart oppretter databasen, kjører migreringene på
-nytt og gjenoppretter de ti opprinnelige personene.
+nytt og gjenoppretter de ti opprinnelige personene og de 20 opprinnelige rommene.
 
 ### Databaseskjema
 
@@ -367,7 +380,12 @@ og telefonnumrene er åpenbart fiktive.
 
 Flyway registrerer V2 etter første vellykkede kjøring. Derfor overskrives ikke
 endrede personer, og slettede personer gjenopprettes ikke ved vanlig omstart.
-En eksplisitt reset av databasevolumet kjører både V1 og V2 på nytt og gir den
+`V3__create_room_table.sql` oppretter `room`-tabellen med romnummer som
+primærnøkkel og regler for positive størrelser, støttede sengantall og plausible
+renoveringsår. `V4__seed_room_table.sql` legger inn 20 rom fordelt på enerom,
+tomannsrom og firemannsrom, med varierte størrelser, balkonger og renoveringsår.
+
+En eksplisitt reset av databasevolumet kjører V1–V4 på nytt og gir den
 opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
 Spring Boot 4.1.1 dependency management.
 
@@ -380,6 +398,9 @@ personer, mens `findPersonById` og `findAll` bruker JPQL-spørringer deklarert m
 registreringsdatoen. Hibernate validerer Flyway-skjemaet ved oppstart og kan
 ikke endre det. Open EntityManager in View er deaktivert.
 
+`Room` er JPA-entiteten for `room`-tabellen. `RoomRepository` tilbyr eksplisitte
+JPQL-spørringer for ett rom og for alle rom sortert på romnummer.
+
 ### Servicelag
 
 `PersonService` er et enkelt Spring-servicelag over `PersonRepository`. Det
@@ -387,6 +408,10 @@ tilbyr `add`, `findById` og `findAll` og avgrenser transaksjonene. Mapping fra
 den genererte opprettings-DTO-en til `Person`, og fra `Person` til respons-DTO,
 ligger som private funksjoner direkte i servicelaget. Lesemetodene bruker
 read-only-transaksjoner.
+
+`RoomService` mapper rom til den genererte respons-DTO-en og bruker read-only-
+transaksjoner. `RoomController` implementerer det genererte `RoomApi`-
+grensesnittet og returnerer HTTP 404 når romnummeret ikke finnes.
 
 PostgreSQL-imaget er låst til `docker.io/library/postgres:18.6-trixie`.
 [PostgreSQL 18.6](https://www.postgresql.org/docs/18/release-18-6.html) er valgt

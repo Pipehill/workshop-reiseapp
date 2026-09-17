@@ -7,6 +7,7 @@ import java.net.http.HttpResponse
 import java.time.LocalDate
 import no.pipehill.reiseapp.api.dto.CreatePersonRequest
 import no.pipehill.reiseapp.api.dto.PersonResponse
+import no.pipehill.reiseapp.service.room.RoomRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
@@ -26,6 +27,9 @@ import tools.jackson.databind.ObjectMapper
 class PersonControllerTest {
     @MockitoBean
     private lateinit var service: PersonService
+
+    @MockitoBean
+    private lateinit var roomRepository: RoomRepository
 
     @LocalServerPort
     private var port: Int = 0

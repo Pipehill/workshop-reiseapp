@@ -36,7 +36,9 @@ class PersonServiceTest {
         Mockito.verify(repository).save(captor.capture())
         assertThat(captor.value)
             .usingRecursiveComparison()
+            .ignoringFields("registrationDate")
             .isEqualTo(person())
+        assertThat(captor.value.registrationDate).isEqualTo(LocalDate.now())
     }
 
     @Test
