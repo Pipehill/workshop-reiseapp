@@ -2,9 +2,15 @@ package no.pipehill.reiseapp.service.room
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.Lock
+import jakarta.persistence.LockModeType
 import org.springframework.data.repository.query.Param
 
 interface RoomRepository : JpaRepository<Room, Int> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT room FROM Room room WHERE room.roomNumber = :roomNumber")
+    fun findRoomByNumberForUpdate(@Param("roomNumber") roomNumber: Int): Room?
+
     @Query("SELECT room FROM Room room WHERE room.roomNumber = :roomNumber")
     fun findRoomByNumber(@Param("roomNumber") roomNumber: Int): Room?
 

@@ -173,7 +173,8 @@ Se README.md for forutsetninger, miljøvariabler og førstegangsoppsett.
 Prosjektet har Maven-parent og bruker lokalt installert Maven 3.9.16,
 `spec/openapi.yaml` og modulen `api`. Modulen validerer kontrakten
 og genererer Kotlin-DTO-er og Spring API-grensesnitt i `target/`.
-Modulen `service` implementerer `HealthApi`, `PersonApi` og `RoomApi`. `GET /health` svarer
+Modulen `service` implementerer `HealthApi`, `PersonApi`, `RoomApi`,
+`ActivityApi` og `AccommodationApi`. `GET /health` svarer
 med HTTP 200 og `{"status":"UP"}`. Dette er en livssjekk for API-et og kontrollerer
 ikke databasetilkoblingen. Det tidligere `/ping`-endepunktet er fjernet.
 Person-API-et tilbyr `GET /persons`,
@@ -238,6 +239,19 @@ sengekapasiteten, ved oppslag på startpersonenes e-postadresser.
 med `persons` sortert på ID (tom liste for ledige rom). Nestede objekter bruker
 grunnresponsene uten tilbakekobling. Liste- og opprettingsresponsene er uendret;
 bare detaljoppslag henter koblingene. Ingen nye endepunkter er innført.
+Romtildeling kan nå endres med `PUT /persons/{personId}/room`
+(`AssignRoomRequest` med `roomNumber`) og `DELETE /persons/{personId}/room`.
+`AccommodationController` implementerer `AccommodationApi` og mapper resultatene
+fra `AccommodationService` til 204, 404 eller 409; valideringsfeil gir 400.
+PUT kan flytte mellom rom atomisk; fullt målrom gir 409 og bevarer gammel tildeling.
+PUT til samme rom og DELETE for en person uten rom er idempotente (204).
+Servicelaget bruker READ_COMMITTED og pessimistisk skrivelås på personen først,
+deretter gammelt/nytt rom i stigende romnummer. Kapasitet telles etter romlåsen
+og låsene beholdes til commit. Alle endringer i romtildelinger må følge dette
+låseregimet for å bevare kapasitet og unngå deadlock mellom motsatte flyttinger.
+Ingen skjemaendringer er nødvendige. Verifisert med `mvn clean verify` mot isolert
+PostgreSQL 18.6: alle 42 tester bestod, inkludert samtidige tildelinger til siste
+seng, samtidige tildelinger for samme person, fjerning, flytting og HTTP-validering.
 Verifisert 17. september 2026 med `mvn clean verify` mot en isolert PostgreSQL
 18.6-container: alle 19 tester bestod, inkludert V1–V6, Hibernate-validering,
 JPQL-oppslag i begge retninger og kontroll av seedet sengekapasitet.

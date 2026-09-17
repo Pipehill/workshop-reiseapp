@@ -289,6 +289,24 @@ og året rommet sist ble renovert. Antall senger er begrenset til 1, 2 eller 4.
 Romdataene er read-only; API-et har ingen endepunkter for å opprette eller endre
 rom.
 
+Romtildeling kan endres via personens romressurs:
+
+| Metode og sti | Forespørsel | Respons |
+| --- | --- | --- |
+| `PUT /persons/{personId}/room` | `{"roomNumber":106}` | 204 ved tildeling, 409 hvis rommet er fullt |
+| `DELETE /persons/{personId}/room` | Ingen body | 204 når personen er uten rom |
+
+Begge gir 404 når personen ikke finnes. PUT gir også 404 for ukjent rom.
+Ugyldige ID-er, romnumre eller PUT-body gir 400.
+PUT flytter personen fra et tidligere rom hvis det nye har plass; ved avvisning
+beholdes den gamle tildelingen. Gjentatt PUT til samme rom gir 204 selv om rommet
+er fullt. DELETE gir 204 også når personen allerede er uten rom.
+Endringene vises i person- og romdetaljene og lagres i databasen.
+
+`AccommodationService` låser personen og berørte rom i en transaksjon før
+kapasitet kontrolleres og tildelingen endres. Rom låses i stigende romnummer.
+Dette hindrer overbooking ved samtidige API-kall og sikrer høyst ett rom per person.
+
 ## Aktivitets-API
 
 - `GET /activities` returnerer alle aktiviteter sortert på starttidspunkt og
@@ -474,7 +492,8 @@ grensesnittet og returnerer HTTP 404 når romnummeret ikke finnes.
 
 Begge servicelagene bruker `PersonRoomRepository` ved detaljoppslag.
 Repositoryet henter tildelt rom eller personene på rommet med eksplisitt JPQL.
-Listeoppslag laster ikke koblinger. Ingen nye endepunkter er lagt til.
+Listeoppslag laster ikke koblinger. Skriving av romtildelinger håndteres av
+`AccommodationController` og `AccommodationService`.
 
 PostgreSQL-imaget er låst til `docker.io/library/postgres:18.6-trixie`.
 [PostgreSQL 18.6](https://www.postgresql.org/docs/18/release-18-6.html) er valgt

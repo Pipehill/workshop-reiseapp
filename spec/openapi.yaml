@@ -4,6 +4,8 @@ info:
   version: 0.1.0
   description: API-kontrakt for reiseappen.
 tags:
+  - name: Accommodation
+    description: Tildeling og fjerning av rom for personer.
   - name: Activity
     description: Uthenting av aktiviteter og praktiske råd.
   - name: Health
@@ -13,6 +15,50 @@ tags:
   - name: Room
     description: Uthenting av rom og romdetaljer.
 paths:
+  /persons/{personId}/room:
+    parameters:
+      - name: personId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    put:
+      tags: [Accommodation]
+      operationId: assignRoom
+      summary: Tildeler et rom til en person.
+      description: >
+        Flytter personen hvis vedkommende har et annet rom. Rommet må ha en
+        ledig seng. Ved feil beholdes eksisterende tildeling. Gjentatt tildeling
+        til samme rom lykkes uten endringer, også når rommet er fullt.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRoomRequest'
+      responses:
+        '204':
+          description: Personen er tildelt rommet.
+        '400':
+          description: Ugyldig person-ID eller romnummer.
+        '404':
+          description: Personen eller rommet finnes ikke.
+        '409':
+          description: Rommet er fullt. Eksisterende tildeling er uendret.
+    delete:
+      tags: [Accommodation]
+      operationId: removeRoomAssignment
+      summary: Fjerner personens romtildeling.
+      description: Lykkes også når personen allerede er uten rom.
+      responses:
+        '204':
+          description: Personen har ingen romtildeling.
+        '400':
+          description: Ugyldig person-ID.
+        '404':
+          description: Personen finnes ikke.
   /activities:
     get:
       tags: [Activity]
@@ -167,6 +213,15 @@ paths:
           description: Rommet finnes ikke.
 components:
   schemas:
+    AssignRoomRequest:
+      type: object
+      required: [roomNumber]
+      properties:
+        roomNumber:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 106
     ActivityDetailsResponse:
       allOf:
         - $ref: '#/components/schemas/ActivityResponse'
