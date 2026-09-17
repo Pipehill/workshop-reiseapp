@@ -6,6 +6,7 @@ import no.pipehill.reiseapp.api.dto.PersonDetailsResponse
 import no.pipehill.reiseapp.api.dto.RoomResponse
 import no.pipehill.reiseapp.api.dto.ActivityResponse
 import no.pipehill.reiseapp.service.activity.PersonActivityRepository
+import java.time.format.DateTimeFormatter
 import no.pipehill.reiseapp.service.accommodation.PersonRoomRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -38,8 +39,8 @@ class PersonService(
                     title = it.title,
                     description = it.description,
                     maxParticipants = it.maxParticipants,
-                    startTime = it.startTime,
-                    endTime = it.endTime,
+                    startTime = it.startTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+                    endTime = it.endTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
                     notes = it.notes,
                 )
             },

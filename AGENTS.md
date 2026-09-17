@@ -186,7 +186,7 @@ og PostgreSQL JDBC 42.7.13. `V1__create_person_table.sql` oppretter tabellen
 `person` med identity-ID, navn, avdeling, e-post, telefonnummer, kjønn og
 registreringsdato. Tekstfeltene er påkrevde og kan ikke være blanke; e-post er
 unik uavhengig av store/små bokstaver. `V2__seed_person_table.sql` legger inn
-ti deterministiske, fiktive personer. Flyway kjører seedingen bare ved første
+20 deterministiske, fiktive personer. Flyway kjører seedingen bare ved første
 initialisering, slik at vanlig omstart ikke overskriver, gjenoppretter eller
 dupliserer data. Reset av databasevolumet gjenoppretter de opprinnelige dataene.
 
@@ -224,7 +224,7 @@ konfigurert.
 
 Romfordeling lagres i `person_room` via JPA-entiteten `PersonRoom`.
 V5 oppretter tabellen med person-ID som primærnøkkel (høyst ett rom per person),
-fremmednøkler og indeks på romnummer. V6 seeder ti koblinger til fem rom innenfor
+fremmednøkler og indeks på romnummer. V6 seeder 20 koblinger til ti rom innenfor
 sengekapasiteten, ved oppslag på startpersonenes e-postadresser.
 `PersonRoomRepository` tilbyr eksplisitte JPQL-spørringer i begge retninger.
 `PersonService.findById` returnerer `PersonDetailsResponse` med valgfri
@@ -238,23 +238,31 @@ JPQL-oppslag i begge retninger og kontroll av seedet sengekapasitet.
 
 Aktivitets-API-et tilbyr bare `GET /activities` og
 `GET /activities/{activityId}`. Grunnresponsen `ActivityResponse` har ID,
-tittel, beskrivelse, maksantall deltakere, start/slutt som `OffsetDateTime`
+tittel, beskrivelse, maksantall deltakere, start/slutt som strenger i `HH:mm:ss`
 og `notes` som fritekst (tom streng når det ikke finnes råd).
 Listen sorteres på starttidspunkt og ID.
 V7 oppretter `activity` med `notes` (TEXT NOT NULL DEFAULT '') og regler for positiv
-kapasitet og varighet fra 2 til 8 timer inklusive. V8 seeder fem aktiviteter
-3.–4. oktober 2026 med passende praktiske råd. Tidspunkter lagres som PostgreSQL
-`TIMESTAMP WITH TIME ZONE`; offset kan normaliseres til UTC.
+kapasitet og varighet fra 2 til 8 timer inklusive, med slutt etter start samme dag.
+V8 seeder fem aktiviteter uten dato, med passende praktiske råd.
+Klokkeslett lagres som PostgreSQL `TIME WITHOUT TIME ZONE` og Kotlin `LocalTime`.
+Manglende dato og tidssone er en uttrykkelig bestilt integrasjonsutfordring:
+klienten kan ikke utlede dag eller tidssone fra API-et. Bevar denne begrensningen
+og ikke innfør dato/tidssone uten bestilling.
+Ikke avslør læringsformålet eller omtale datakvaliteten som bevisst dårlig
+i API-kontrakten, API-responser eller deltakerrettet dokumentasjon.
+Beskriv format og oppførsel nøytralt; begrunnelsen beholdes i prosjektkonteksten her.
 `Activity` mapper `notes` som et vanlig String-felt.
 `ActivityRepository` bruker JPQL for liste og detaljoppslag.
 `ActivityService` mapper innenfor read-only-transaksjoner.
 Verifisert med `mvn clean verify` mot isolert PostgreSQL 18.6:
-alle 33 tester bestod, inkludert HTTP, mapping, migreringer og varighetsregler.
+alle 34 tester bestod, inkludert HTTP-klokkeslett, mapping, migreringer,
+varighetsregler og rom-/aktivitetskapasitet for de utvidede startdataene.
 
 V9 oppretter `person_activity` med person-ID som primærnøkkel, fremmednøkler
 og indeks på aktivitets-ID. En person kan ha 0–1 aktivitet, en aktivitet
-0–mange personer. V10 seeder åtte personer på aktivitet 1–4 (to på hver);
-person 9 og 10 samt aktivitet 5 har ingen koblinger.
+0–mange personer. V10 seeder 18 personer: fire på hver av aktivitet 1–4 og
+to på aktivitet 5. Person 9 og 10 har ingen aktivitet. De ti nye personene
+(ID 11–20) har alle både rom og aktivitet.
 `PersonDetailsResponse.activity` er valgfri `ActivityResponse`.
 Aktivitetsdetaljer bruker `ActivityDetailsResponse` med `participants`
 som liste av `PersonResponse`, sortert på person-ID, tom ved ingen deltakere.

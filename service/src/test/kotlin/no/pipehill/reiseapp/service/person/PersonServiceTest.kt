@@ -89,13 +89,16 @@ class PersonServiceTest {
 
     @Test
     fun `loads activity only for person details`() {
-        val start = java.time.OffsetDateTime.parse("2026-10-03T09:00:00+02:00")
+        val start = java.time.LocalTime.parse("09:00:00")
         val activity = no.pipehill.reiseapp.service.activity.Activity(
             "Fjelltur", "Tur med guide", 16, start, start.plusHours(6), "Gode sko", 1)
         Mockito.`when`(repository.findPersonById(1)).thenReturn(person(id = 1))
         Mockito.`when`(participation.findActivityByPersonId(1)).thenReturn(activity)
 
-        assertThat(service.findById(1)?.activity).usingRecursiveComparison().isEqualTo(activity)
+        val result = service.findById(1)?.activity
+        assertThat(result).usingRecursiveComparison().ignoringFields("startTime", "endTime").isEqualTo(activity)
+        assertThat(result?.startTime).isEqualTo("09:00:00")
+        assertThat(result?.endTime).isEqualTo("15:00:00")
         Mockito.clearInvocations(participation)
         service.findAll()
         Mockito.verifyNoInteractions(participation)

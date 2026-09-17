@@ -27,7 +27,10 @@ class PersonRoomRepositoryTest {
 
     @Test
     fun `seeded assignments are consistent in both directions and fit room capacity`() {
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM person_room", Long::class.java)).isEqualTo(10)
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM person_room", Long::class.java)).isEqualTo(20)
+        for (personId in 11L..20L) {
+            assertThat(repository.findRoomByPersonId(personId)).isNotNull()
+        }
         val persons = repository.findPersonsByRoomNumber(108)
         assertThat(persons.map { it.id }).containsExactly(5L, 6L, 7L, 8L)
         persons.forEach {

@@ -35,9 +35,9 @@ class PersonActivityRepositoryTest {
 
     @Test
     fun `reads participation in both directions including empty relationships`() {
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM person_activity", Long::class.java)).isEqualTo(8)
-        assertThat(repository.findParticipantsByActivityId(1).map { it.id }).containsExactly(1L, 2L)
-        for (personId in 1L..8L) {
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM person_activity", Long::class.java)).isEqualTo(18)
+        assertThat(repository.findParticipantsByActivityId(1).map { it.id }).containsExactly(1L, 2L, 11L, 12L)
+        for (personId in (1L..8L) + (11L..20L)) {
             val activity = repository.findActivityByPersonId(personId)
             assertThat(activity).isNotNull()
             assertThat(repository.findParticipantsByActivityId(requireNotNull(activity?.id)).map { it.id })
@@ -45,14 +45,20 @@ class PersonActivityRepositoryTest {
         }
         assertThat(persons.findById(1)?.activity?.id).isEqualTo(1)
         assertThat(persons.findById(9)?.activity).isNull()
-        assertThat(activities.findById(1)?.participants?.map { it.id }).containsExactly(1L, 2L)
-        assertThat(activities.findById(5)?.participants).isEmpty()
+        assertThat(activities.findById(1)?.participants?.map { it.id }).containsExactly(1L, 2L, 11L, 12L)
+        assertThat(activities.findById(5)?.participants?.map { it.id }).containsExactly(19L, 20L)
         assertThat(repository.findActivityByPersonId(Long.MAX_VALUE)).isNull()
         assertThat(repository.findParticipantsByActivityId(Long.MAX_VALUE)).isEmpty()
         assertThat(jdbc.queryForList(
             "SELECT activity.id FROM activity JOIN person_activity ON activity.id = activity_id " +
                 "GROUP BY activity.id HAVING count(*) > activity.max_participants",
         )).isEmpty()
+    }
+
+    @Test
+    fun `activity without participants returns an empty list`() {
+        jdbc.update("DELETE FROM person_activity WHERE activity_id = 5")
+        assertThat(activities.findById(5)?.participants).isEmpty()
     }
 
     @ParameterizedTest
