@@ -236,6 +236,21 @@ Verifisert 17. september 2026 med `mvn clean verify` mot en isolert PostgreSQL
 18.6-container: alle 19 tester bestod, inkludert V1–V6, Hibernate-validering,
 JPQL-oppslag i begge retninger og kontroll av seedet sengekapasitet.
 
+Aktivitets-API-et tilbyr bare `GET /activities` og
+`GET /activities/{activityId}`. Begge returnerer `ActivityResponse` med ID,
+tittel, beskrivelse, maksantall deltakere, start/slutt som `OffsetDateTime`
+og `notes` som fritekst (tom streng når det ikke finnes råd).
+Listen sorteres på starttidspunkt og ID.
+V7 oppretter `activity` med `notes` (TEXT NOT NULL DEFAULT '') og regler for positiv
+kapasitet og varighet fra 2 til 8 timer inklusive. V8 seeder fem aktiviteter
+3.–4. oktober 2026 med passende praktiske råd. Tidspunkter lagres som PostgreSQL
+`TIMESTAMP WITH TIME ZONE`; offset kan normaliseres til UTC.
+`Activity` mapper `notes` som et vanlig String-felt.
+`ActivityRepository` bruker JPQL for liste og detaljoppslag.
+`ActivityService` mapper innenfor read-only-transaksjoner.
+Verifisert med `mvn clean verify` mot isolert PostgreSQL 18.6:
+alle 28 tester bestod, inkludert HTTP, mapping, migreringer og varighetsregler.
+
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
 `service/Dockerfile` pakker Maven-byggets JAR i
 `docker.io/library/eclipse-temurin:25.0.4_7-jre-noble` (Linux JRE 25.0.4+7,
