@@ -83,7 +83,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PersonResponse'
+                $ref: '#/components/schemas/PersonDetailsResponse'
         '404':
           description: Personen finnes ikke.
   /rooms:
@@ -120,13 +120,34 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoomResponse'
+                $ref: '#/components/schemas/RoomDetailsResponse'
         '400':
           description: Romnummeret er ugyldig.
         '404':
           description: Rommet finnes ikke.
 components:
   schemas:
+    PersonDetailsResponse:
+      allOf:
+        - $ref: '#/components/schemas/PersonResponse'
+        - type: object
+          properties:
+            assignedRoom:
+              description: Tildelt rom. Null eller utelatt hvis personen ikke har rom.
+              nullable: true
+              allOf:
+                - $ref: '#/components/schemas/RoomResponse'
+    RoomDetailsResponse:
+      allOf:
+        - $ref: '#/components/schemas/RoomResponse'
+        - type: object
+          required: [persons]
+          properties:
+            persons:
+              description: Tildelte personer sortert på ID. Tom liste for ledige rom.
+              type: array
+              items:
+                $ref: '#/components/schemas/PersonResponse'
     HealthResponse:
       type: object
       required: [status]

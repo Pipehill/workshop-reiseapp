@@ -1,6 +1,8 @@
 package no.pipehill.reiseapp.service.room
 
 import no.pipehill.reiseapp.api.dto.RoomResponse
+import no.pipehill.reiseapp.service.accommodation.PersonRoomRepository
+import no.pipehill.reiseapp.service.person.Person
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -14,11 +16,14 @@ class RoomServiceTest {
     @Mock
     private lateinit var repository: RoomRepository
 
+    @Mock
+    private lateinit var assignments: PersonRoomRepository
+
     private lateinit var service: RoomService
 
     @BeforeEach
     fun setUp() {
-        service = RoomService(repository)
+        service = RoomService(repository, assignments)
     }
 
     @Test
@@ -26,8 +31,11 @@ class RoomServiceTest {
         Mockito.`when`(repository.findRoomByNumber(204)).thenReturn(room())
         Mockito.`when`(repository.findRoomByNumber(999)).thenReturn(null)
 
-        assertThat(service.findByNumber(204)).isEqualTo(roomResponse())
+        val result = service.findByNumber(204)
+        assertThat(result?.roomNumber).isEqualTo(204)
+        assertThat(result?.persons).isEmpty()
         assertThat(service.findByNumber(999)).isNull()
+        Mockito.verify(assignments, Mockito.never()).findPersonsByRoomNumber(999)
     }
 
     @Test
@@ -40,6 +48,21 @@ class RoomServiceTest {
             roomResponse(),
             roomResponse(roomNumber = 205),
         )
+    }
+
+    @Test
+    fun `loads assigned people only for room details`() {
+        val person = Person("Test Person", "Test", "test@reiseapp.test", "+47 0000 0011", "mann", id = 11)
+        Mockito.`when`(repository.findRoomByNumber(204)).thenReturn(room())
+        Mockito.`when`(assignments.findPersonsByRoomNumber(204)).thenReturn(listOf(person))
+
+        val result = service.findByNumber(204)
+
+        assertThat(result?.persons).hasSize(1)
+        assertThat(result?.persons?.first()).usingRecursiveComparison().isEqualTo(person)
+        Mockito.clearInvocations(assignments)
+        service.findAll()
+        Mockito.verifyNoInteractions(assignments)
     }
 
     private fun room(roomNumber: Int = 204): Room =

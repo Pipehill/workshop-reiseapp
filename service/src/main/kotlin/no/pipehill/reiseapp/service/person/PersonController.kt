@@ -4,6 +4,7 @@ import java.net.URI
 import no.pipehill.reiseapp.api.PersonApi
 import no.pipehill.reiseapp.api.dto.CreatePersonRequest
 import no.pipehill.reiseapp.api.dto.PersonResponse
+import no.pipehill.reiseapp.api.dto.PersonDetailsResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 
@@ -18,7 +19,7 @@ class PersonController(
             .body(createdPerson)
     }
 
-    override fun getPerson(personId: Long): ResponseEntity<PersonResponse> =
+    override fun getPerson(personId: Long): ResponseEntity<PersonDetailsResponse> =
         service.findById(personId)
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()

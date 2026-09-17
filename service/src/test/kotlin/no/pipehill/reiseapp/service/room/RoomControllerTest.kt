@@ -5,6 +5,10 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import no.pipehill.reiseapp.api.dto.RoomResponse
+import no.pipehill.reiseapp.api.dto.RoomDetailsResponse
+import no.pipehill.reiseapp.api.dto.PersonResponse
+import java.time.LocalDate
+import no.pipehill.reiseapp.service.accommodation.PersonRoomRepository
 import no.pipehill.reiseapp.service.person.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -29,6 +33,9 @@ class RoomControllerTest {
     @MockitoBean
     private lateinit var personRepository: PersonRepository
 
+    @MockitoBean
+    private lateinit var assignments: PersonRoomRepository
+
     @LocalServerPort
     private var port: Int = 0
 
@@ -49,14 +56,17 @@ class RoomControllerTest {
 
     @Test
     fun `gets a room or returns not found`() {
-        Mockito.`when`(service.findByNumber(204)).thenReturn(roomResponse())
+        val details = RoomDetailsResponse(204, 23, RoomDetailsResponse.NumberOfBeds._2, true, 2024,
+            listOf(PersonResponse(11, "Test Person", "Test", "test@reiseapp.test",
+                "+47 0000 0011", "mann", LocalDate.of(2026, 9, 15))))
+        Mockito.`when`(service.findByNumber(204)).thenReturn(details)
         Mockito.`when`(service.findByNumber(999)).thenReturn(null)
 
         val response = sendGet("/rooms/204")
 
         assertThat(response.statusCode()).isEqualTo(200)
         assertThat(mapper.readTree(response.body()))
-            .isEqualTo(mapper.readTree(mapper.writeValueAsString(roomResponse())))
+            .isEqualTo(mapper.readTree(mapper.writeValueAsString(details)))
         assertThat(sendGet("/rooms/999").statusCode()).isEqualTo(404)
     }
 
