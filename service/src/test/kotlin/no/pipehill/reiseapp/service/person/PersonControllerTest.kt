@@ -41,6 +41,9 @@ class PersonControllerTest {
     private var port: Int = 0
 
     @MockitoBean
+    private lateinit var participation: no.pipehill.reiseapp.service.activity.PersonActivityRepository
+
+    @MockitoBean
     private lateinit var activityRepository: no.pipehill.reiseapp.service.activity.ActivityRepository
 
     private val mapper = ObjectMapper()
@@ -63,7 +66,7 @@ class PersonControllerTest {
         val details = personResponse().let {
             PersonDetailsResponse(it.id, it.name, it.department, it.email, it.phoneNumber,
                 it.gender, it.registrationDate,
-                RoomResponse(104, 22, RoomResponse.NumberOfBeds._2, false, 2024))
+                assignedRoom = RoomResponse(104, 22, RoomResponse.NumberOfBeds._2, false, 2024))
         }
         Mockito.`when`(service.findById(11)).thenReturn(details)
         Mockito.`when`(service.findById(12)).thenReturn(null)

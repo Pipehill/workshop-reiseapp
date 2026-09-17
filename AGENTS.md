@@ -237,7 +237,7 @@ Verifisert 17. september 2026 med `mvn clean verify` mot en isolert PostgreSQL
 JPQL-oppslag i begge retninger og kontroll av seedet sengekapasitet.
 
 Aktivitets-API-et tilbyr bare `GET /activities` og
-`GET /activities/{activityId}`. Begge returnerer `ActivityResponse` med ID,
+`GET /activities/{activityId}`. Grunnresponsen `ActivityResponse` har ID,
 tittel, beskrivelse, maksantall deltakere, start/slutt som `OffsetDateTime`
 og `notes` som fritekst (tom streng når det ikke finnes råd).
 Listen sorteres på starttidspunkt og ID.
@@ -249,7 +249,18 @@ kapasitet og varighet fra 2 til 8 timer inklusive. V8 seeder fem aktiviteter
 `ActivityRepository` bruker JPQL for liste og detaljoppslag.
 `ActivityService` mapper innenfor read-only-transaksjoner.
 Verifisert med `mvn clean verify` mot isolert PostgreSQL 18.6:
-alle 28 tester bestod, inkludert HTTP, mapping, migreringer og varighetsregler.
+alle 33 tester bestod, inkludert HTTP, mapping, migreringer og varighetsregler.
+
+V9 oppretter `person_activity` med person-ID som primærnøkkel, fremmednøkler
+og indeks på aktivitets-ID. En person kan ha 0–1 aktivitet, en aktivitet
+0–mange personer. V10 seeder åtte personer på aktivitet 1–4 (to på hver);
+person 9 og 10 samt aktivitet 5 har ingen koblinger.
+`PersonDetailsResponse.activity` er valgfri `ActivityResponse`.
+Aktivitetsdetaljer bruker `ActivityDetailsResponse` med `participants`
+som liste av `PersonResponse`, sortert på person-ID, tom ved ingen deltakere.
+Listene returnerer grunnopplysninger uten koblinger. `PersonService` og
+`ActivityService` henter koblingene fra `PersonActivityRepository` med JPQL.
+Databasetester verifiserer kardinalitet, fremmednøkler og begge oppslagsretninger.
 
 Start tjenesten etter bygg med `java -jar service/target/service-0.1.0-SNAPSHOT.jar`.
 `service/Dockerfile` pakker Maven-byggets JAR i

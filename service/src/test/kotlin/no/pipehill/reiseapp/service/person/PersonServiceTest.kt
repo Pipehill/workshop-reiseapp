@@ -22,11 +22,14 @@ class PersonServiceTest {
     @Mock
     private lateinit var assignments: PersonRoomRepository
 
+    @Mock
+    private lateinit var participation: no.pipehill.reiseapp.service.activity.PersonActivityRepository
+
     private lateinit var service: PersonService
 
     @BeforeEach
     fun setUp() {
-        service = PersonService(repository, assignments)
+        service = PersonService(repository, assignments, participation)
     }
 
     @Test
@@ -55,10 +58,12 @@ class PersonServiceTest {
         Mockito.`when`(repository.findAll()).thenReturn(listOf(firstPerson, secondPerson))
 
         assertThat(service.findById(1)).usingRecursiveComparison()
-            .ignoringFields("assignedRoom").isEqualTo(personResponse(id = 1))
+            .ignoringFields("assignedRoom", "activity").isEqualTo(personResponse(id = 1))
+        assertThat(service.findById(1)?.activity).isNull()
         assertThat(service.findById(1)?.assignedRoom).isNull()
         assertThat(service.findById(Long.MAX_VALUE)).isNull()
         Mockito.verify(assignments, Mockito.never()).findRoomByPersonId(Long.MAX_VALUE)
+        Mockito.verify(participation, Mockito.never()).findActivityByPersonId(Long.MAX_VALUE)
         assertThat(service.findAll()).containsExactly(
             personResponse(id = 1),
             personResponse(id = 2),
@@ -80,6 +85,20 @@ class PersonServiceTest {
         Mockito.clearInvocations(assignments)
         service.findAll()
         Mockito.verifyNoInteractions(assignments)
+    }
+
+    @Test
+    fun `loads activity only for person details`() {
+        val start = java.time.OffsetDateTime.parse("2026-10-03T09:00:00+02:00")
+        val activity = no.pipehill.reiseapp.service.activity.Activity(
+            "Fjelltur", "Tur med guide", 16, start, start.plusHours(6), "Gode sko", 1)
+        Mockito.`when`(repository.findPersonById(1)).thenReturn(person(id = 1))
+        Mockito.`when`(participation.findActivityByPersonId(1)).thenReturn(activity)
+
+        assertThat(service.findById(1)?.activity).usingRecursiveComparison().isEqualTo(activity)
+        Mockito.clearInvocations(participation)
+        service.findAll()
+        Mockito.verifyNoInteractions(participation)
     }
 
     private fun createRequest(): CreatePersonRequest =

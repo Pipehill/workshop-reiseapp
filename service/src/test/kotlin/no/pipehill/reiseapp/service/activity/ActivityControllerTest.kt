@@ -35,6 +35,9 @@ class ActivityControllerTest {
     private lateinit var assignments: PersonRoomRepository
     @LocalServerPort
     private var port: Int = 0
+
+    @MockitoBean
+    private lateinit var participation: no.pipehill.reiseapp.service.activity.PersonActivityRepository
     private val mapper = ObjectMapper()
 
     @Test
@@ -44,6 +47,9 @@ class ActivityControllerTest {
             "Gode sko.\nMat og vann.", 1)
         Mockito.`when`(repository.findAll()).thenReturn(listOf(activity))
         Mockito.`when`(repository.findActivityById(1)).thenReturn(activity)
+        Mockito.`when`(participation.findParticipantsByActivityId(1)).thenReturn(listOf(
+            no.pipehill.reiseapp.service.person.Person(
+                "Test Person", "Test", "test@reiseapp.test", "+47 0000 0011", "mann", id = 11)))
 
         val response = request("/activities/1")
         assertThat(response.statusCode()).isEqualTo(200)
@@ -57,15 +63,22 @@ class ActivityControllerTest {
         assertThat(OffsetDateTime.parse(body.get("endTime").asText()).toInstant()).isEqualTo(start.plusHours(6).toInstant())
         assertThat(body.get("notes").asText()).isEqualTo("Gode sko.\nMat og vann.")
         assertThat(body.has("checklist")).isFalse()
+        assertThat(body.get("participants").size()).isEqualTo(1)
+        assertThat(body.get("participants").get(0).get("id").asLong()).isEqualTo(11)
+        assertThat(body.get("participants").get(0).has("activity")).isFalse()
+        Mockito.clearInvocations(participation)
         val list = request("/activities")
         assertThat(list.statusCode()).isEqualTo(200)
-        assertThat(mapper.readTree(list.body())).isEqualTo(mapper.readTree("[" + response.body() + "]"))
+        assertThat(mapper.readTree(list.body()).get(0).has("participants")).isFalse()
+        assertThat(mapper.readTree(list.body()).get(0).get("title")).isEqualTo(body.get("title"))
+        Mockito.verifyNoInteractions(participation)
     }
 
     @Test
     fun `empty list and missing activity`() {
         assertThat(mapper.readTree(request("/activities").body())).isEqualTo(mapper.readTree("[]"))
         assertThat(request("/activities/999").statusCode()).isEqualTo(404)
+        Mockito.verifyNoInteractions(participation)
     }
 
     @Test

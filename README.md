@@ -313,6 +313,19 @@ Seedingen kjøres én gang og overskriver ikke data ved senere oppstart.
 `ActivityService` mapper til generert DTO innenfor read-only-transaksjoner,
 og `ActivityController` implementerer det genererte `ActivityApi`.
 
+Personer kan delta på høyst én aktivitet. `GET /persons/{personId}` inkluderer
+`activity` med aktivitetens grunnopplysninger (null eller utelatt når personen
+ikke deltar). `GET /activities/{activityId}` inkluderer `participants`, sortert
+på person-ID, eller en tom liste. Nestede objekter har ingen tilbakekoblinger.
+Listeendepunktene beholder grunnresponsene.
+
+V9 oppretter `person_activity` med person-ID som primærnøkkel og fremmednøkler
+til person og aktivitet. V10 seeder åtte personer fordelt på aktivitet 1–4,
+med to deltakere på hver. To startpersoner har ingen aktivitet, og aktivitet 5
+har ingen deltakere. Seedingen holder seg innenfor maksantall deltakere.
+`PersonService` og `ActivityService` henter koblingene ved detaljoppslag via
+JPQL i `PersonActivityRepository`. Ingen nye endepunkter er lagt til.
+
 ## Kjør med Podman eller Docker
 
 Installer Podman (foretrukket) eller Docker med støtte for Linux-containere.
@@ -429,7 +442,7 @@ har fremmednøkler; sletting av en person fjerner også koblingen.
 på e-post og gjenoppretter ikke slettede personer eller rom. Den kjøres bare én
 gang gjennom Flyway, også ved oppgradering av eksisterende databaser.
 
-En eksplisitt reset av databasevolumet kjører V1–V8 på nytt og gir den
+En eksplisitt reset av databasevolumet kjører V1–V10 på nytt og gir den
 opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
 Spring Boot 4.1.1 dependency management.
 

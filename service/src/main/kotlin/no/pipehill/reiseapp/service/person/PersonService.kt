@@ -4,6 +4,8 @@ import no.pipehill.reiseapp.api.dto.CreatePersonRequest
 import no.pipehill.reiseapp.api.dto.PersonResponse
 import no.pipehill.reiseapp.api.dto.PersonDetailsResponse
 import no.pipehill.reiseapp.api.dto.RoomResponse
+import no.pipehill.reiseapp.api.dto.ActivityResponse
+import no.pipehill.reiseapp.service.activity.PersonActivityRepository
 import no.pipehill.reiseapp.service.accommodation.PersonRoomRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 class PersonService(
     private val repository: PersonRepository,
     private val assignments: PersonRoomRepository,
+    private val participation: PersonActivityRepository,
 ) {
     @Transactional
     fun add(request: CreatePersonRequest): PersonResponse =
@@ -29,6 +32,17 @@ class PersonService(
             phoneNumber = person.phoneNumber,
             gender = person.gender,
             registrationDate = person.registrationDate,
+            activity = participation.findActivityByPersonId(id)?.let {
+                ActivityResponse(
+                    id = checkNotNull(it.id),
+                    title = it.title,
+                    description = it.description,
+                    maxParticipants = it.maxParticipants,
+                    startTime = it.startTime,
+                    endTime = it.endTime,
+                    notes = it.notes,
+                )
+            },
             assignedRoom = room?.let {
                 RoomResponse(
                     roomNumber = it.roomNumber,

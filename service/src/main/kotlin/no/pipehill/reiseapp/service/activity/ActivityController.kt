@@ -2,6 +2,7 @@ package no.pipehill.reiseapp.service.activity
 
 import no.pipehill.reiseapp.api.ActivityApi
 import no.pipehill.reiseapp.api.dto.ActivityResponse
+import no.pipehill.reiseapp.api.dto.ActivityDetailsResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 
@@ -10,7 +11,7 @@ class ActivityController(private val service: ActivityService) : ActivityApi {
     override fun listActivities(): ResponseEntity<List<ActivityResponse>> =
         ResponseEntity.ok(service.findAll())
 
-    override fun getActivity(activityId: Long): ResponseEntity<ActivityResponse> =
+    override fun getActivity(activityId: Long): ResponseEntity<ActivityDetailsResponse> =
         service.findById(activityId)?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
 }
