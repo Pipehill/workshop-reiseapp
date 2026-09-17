@@ -299,13 +299,14 @@ rom.
 Begge responsene inneholder `id`, `title`, `description`,
 `maxParticipants`, `startTime`, `endTime` og `notes` (fritekst med
 praktiske råd og utstyr, tom streng hvis det ikke finnes råd).
-Tidspunktene er ISO 8601 med UTC-offset; offset kan
-normaliseres til UTC ved uthenting. Varigheten er mellom 2 og 8 timer, inkludert
-grensene. Det finnes ingen skriveendepunkter for aktiviteter.
+Tidene er klokkeslett i format `HH:mm:ss`, for eksempel `09:00:00`.
+Varigheten er mellom 2 og 8 timer,
+inkludert grensene, og slutt må være etter start samme dag.
+Det finnes ingen skriveendepunkter for aktiviteter.
 
 Flyway V7 oppretter `activity` med `notes` som fritekstfelt. Databasen håndhever
 positiv kapasitet, varighet og ikke-blanke tekstfelt. V8 seeder fem aktiviteter
-3.–4. oktober 2026: fjelltur (6 timer), kajakktur (3 timer), matkurs (4 timer),
+uten dato: fjelltur (6 timer), kajakktur (3 timer), matkurs (4 timer),
 byvandring (2 timer) og skogstur (8 timer), alle med tilpassede praktiske råd.
 Seedingen kjøres én gang og overskriver ikke data ved senere oppstart.
 
@@ -320,9 +321,10 @@ på person-ID, eller en tom liste. Nestede objekter har ingen tilbakekoblinger.
 Listeendepunktene beholder grunnresponsene.
 
 V9 oppretter `person_activity` med person-ID som primærnøkkel og fremmednøkler
-til person og aktivitet. V10 seeder åtte personer fordelt på aktivitet 1–4,
-med to deltakere på hver. To startpersoner har ingen aktivitet, og aktivitet 5
-har ingen deltakere. Seedingen holder seg innenfor maksantall deltakere.
+til person og aktivitet. V10 seeder 18 personer fordelt på alle fem aktiviteter:
+fire på hver av aktivitet 1–4 og to på aktivitet 5. Person 9 og 10 har ingen
+aktivitet. Alle ti nye personer (ID 11–20) har både rom og aktivitet.
+Seedingen holder seg innenfor maksantall deltakere.
 `PersonService` og `ActivityService` henter koblingene ved detaljoppslag via
 JPQL i `PersonActivityRepository`. Ingen nye endepunkter er lagt til.
 
@@ -404,7 +406,7 @@ volumplasseringen for det offisielle PostgreSQL-imaget fra versjon 18. Vanlig
 `compose down` og run-skriptenes stoppkommando bevarer volumet og dataene.
 `compose down --volumes` er en eksplisitt, destruktiv reset som sletter alle
 lokale databasedata. Neste oppstart oppretter databasen, kjører migreringene på
-nytt og gjenoppretter de ti opprinnelige personene, de 20 rommene,
+nytt og gjenoppretter de 20 opprinnelige personene, de 20 rommene,
 romfordelingen og de fem aktivitetene med praktiske råd.
 
 ### Databaseskjema
@@ -422,7 +424,7 @@ Spring Boot kjører Flyway 12.4.0 ved oppstart. Migreringen
 | `gender` | `VARCHAR(50)` | Påkrevd og kan ikke være blank |
 | `registration_date` | `DATE` | Påkrevd, standard er databasens gjeldende dato |
 
-`V2__seed_person_table.sql` legger inn ti fiktive personer med faste data.
+`V2__seed_person_table.sql` legger inn 20 fiktive personer med faste data.
 Navnene består av adjektiv som fornavn og substantiv som etternavn; enkelte har
 to fornavn eller etternavn. E-postadressene bruker det reserverte `.test`-domenet,
 og telefonnumrene er åpenbart fiktive.
@@ -437,8 +439,8 @@ tomannsrom og firemannsrom, med varierte størrelser, balkonger og renoveringså
 `V5__create_person_room_table.sql` oppretter koblingstabellen `person_room`.
 Person-ID er primærnøkkel, så en person kan ha høyst ett rom. Begge kolonnene
 har fremmednøkler; sletting av en person fjerner også koblingen.
-`V6__seed_person_room_table.sql` knytter de ti startpersonene til rom 101, 102,
-104, 108 og 204 innenfor sengekapasiteten. Seedingen matcher eksisterende personer
+`V6__seed_person_room_table.sql` knytter de 20 startpersonene til ti rom
+innenfor sengekapasiteten. Seedingen matcher eksisterende personer
 på e-post og gjenoppretter ikke slettede personer eller rom. Den kjøres bare én
 gang gjennom Flyway, også ved oppgradering av eksisterende databaser.
 

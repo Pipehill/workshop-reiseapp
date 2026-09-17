@@ -9,4 +9,14 @@ VALUES
     ('Stille Hav Vind', 'Sikkerhet', 'stille.hav.vind@reiseapp.test', '+47 0000 0007', 'kvinne', DATE '2026-04-09'),
     ('Frie Milde Fugl Eng', 'Økonomi', 'frie.milde.fugl.eng@reiseapp.test', '+47 0000 0008', 'mann', DATE '2026-05-12'),
     ('Lysende Morgen', 'Drift', 'lysende.morgen@reiseapp.test', '+47 0000 0009', 'mann', DATE '2026-06-21'),
-    ('Tålmodige Bjørn', 'Innovasjon', 'taalmodige.bjoern@reiseapp.test', '+47 0000 0010', 'kvinne', DATE '2026-08-05');
+    ('Tålmodige Bjørn', 'Innovasjon', 'taalmodige.bjoern@reiseapp.test', '+47 0000 0010', 'kvinne', DATE '2026-08-05'),
+    ('Glade Rev', 'Produkt', 'glade.rev@reiseapp.test', '+47 0000 0011', 'mann', DATE '2026-08-06'),
+    ('Trygge Gran', 'Plattform', 'trygge.gran@reiseapp.test', '+47 0000 0012', 'kvinne', DATE '2026-08-07'),
+    ('Milde Bekk', 'Design', 'milde.bekk@reiseapp.test', '+47 0000 0013', 'ikke-binær', DATE '2026-08-08'),
+    ('Modige Ørn', 'Reise', 'modige.oern@reiseapp.test', '+47 0000 0014', 'mann', DATE '2026-08-09'),
+    ('Rolige Lyng', 'Kundestøtte', 'rolige.lyng@reiseapp.test', '+47 0000 0015', 'kvinne', DATE '2026-08-10'),
+    ('Kloke Ugle', 'Analyse', 'kloke.ugle@reiseapp.test', '+47 0000 0016', 'kvinne', DATE '2026-08-11'),
+    ('Friske Bris', 'Sikkerhet', 'friske.bris@reiseapp.test', '+47 0000 0017', 'mann', DATE '2026-08-12'),
+    ('Varme Eng', 'Økonomi', 'varme.eng@reiseapp.test', '+47 0000 0018', 'ikke-binær', DATE '2026-08-13'),
+    ('Stødige Stein', 'Drift', 'stoedige.stein@reiseapp.test', '+47 0000 0019', 'mann', DATE '2026-08-14'),
+    ('Nysgjerrige Ekorn', 'Innovasjon', 'nysgjerrige.ekorn@reiseapp.test', '+47 0000 0020', 'kvinne', DATE '2026-08-15');

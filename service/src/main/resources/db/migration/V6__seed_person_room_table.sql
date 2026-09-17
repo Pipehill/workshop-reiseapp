@@ -11,7 +11,17 @@ FROM (VALUES
     ('stille.hav.vind@reiseapp.test', 108),
     ('frie.milde.fugl.eng@reiseapp.test', 108),
     ('lysende.morgen@reiseapp.test', 204),
-    ('taalmodige.bjoern@reiseapp.test', 204)
+    ('taalmodige.bjoern@reiseapp.test', 204),
+    ('glade.rev@reiseapp.test', 103),
+    ('trygge.gran@reiseapp.test', 105),
+    ('milde.bekk@reiseapp.test', 105),
+    ('modige.oern@reiseapp.test', 109),
+    ('rolige.lyng@reiseapp.test', 109),
+    ('kloke.ugle@reiseapp.test', 109),
+    ('friske.bris@reiseapp.test', 109),
+    ('varme.eng@reiseapp.test', 201),
+    ('stoedige.stein@reiseapp.test', 205),
+    ('nysgjerrige.ekorn@reiseapp.test', 205)
 ) AS assignment(email, room_number)
 JOIN person ON lower(person.email) = assignment.email
 JOIN room ON room.room_number = assignment.room_number;

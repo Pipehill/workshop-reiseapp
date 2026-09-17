@@ -4,7 +4,7 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.time.OffsetDateTime
+import java.time.LocalTime
 import no.pipehill.reiseapp.service.person.PersonRepository
 import no.pipehill.reiseapp.service.room.RoomRepository
 import no.pipehill.reiseapp.service.accommodation.PersonRoomRepository
@@ -42,7 +42,7 @@ class ActivityControllerTest {
 
     @Test
     fun `lists activities and maps all details through service`() {
-        val start = OffsetDateTime.parse("2026-10-03T09:00:00+02:00")
+        val start = LocalTime.parse("09:00:00")
         val activity = Activity("Fjelltur", "Tur med guide", 16, start, start.plusHours(6),
             "Gode sko.\nMat og vann.", 1)
         Mockito.`when`(repository.findAll()).thenReturn(listOf(activity))
@@ -59,8 +59,8 @@ class ActivityControllerTest {
         assertThat(body.get("title").asText()).isEqualTo("Fjelltur")
         assertThat(body.get("description").asText()).isEqualTo("Tur med guide")
         assertThat(body.get("maxParticipants").asInt()).isEqualTo(16)
-        assertThat(OffsetDateTime.parse(body.get("startTime").asText()).toInstant()).isEqualTo(start.toInstant())
-        assertThat(OffsetDateTime.parse(body.get("endTime").asText()).toInstant()).isEqualTo(start.plusHours(6).toInstant())
+        assertThat(body.get("startTime").asText()).isEqualTo("09:00:00")
+        assertThat(body.get("endTime").asText()).isEqualTo("15:00:00")
         assertThat(body.get("notes").asText()).isEqualTo("Gode sko.\nMat og vann.")
         assertThat(body.has("checklist")).isFalse()
         assertThat(body.get("participants").size()).isEqualTo(1)
@@ -71,6 +71,8 @@ class ActivityControllerTest {
         assertThat(list.statusCode()).isEqualTo(200)
         assertThat(mapper.readTree(list.body()).get(0).has("participants")).isFalse()
         assertThat(mapper.readTree(list.body()).get(0).get("title")).isEqualTo(body.get("title"))
+        assertThat(mapper.readTree(list.body()).get(0).get("startTime").asText()).isEqualTo("09:00:00")
+        assertThat(mapper.readTree(list.body()).get(0).get("endTime").asText()).isEqualTo("15:00:00")
         Mockito.verifyNoInteractions(participation)
     }
 

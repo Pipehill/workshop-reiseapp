@@ -33,7 +33,7 @@ class ActivityRepositoryTest {
     fun `reads five seeded activities with notes`() {
         val activities = repository.findAll()
         assertThat(activities).hasSize(5)
-        assertThat(activities.map { it.id }).containsExactly(1L, 2L, 3L, 5L, 4L)
+        assertThat(activities.map { it.id }).containsExactly(5L, 1L, 2L, 4L, 3L)
         activities.forEach {
             assertThat(Duration.between(it.startTime, it.endTime).toHours()).isBetween(2L, 8L)
             assertThat(it.maxParticipants).isPositive()

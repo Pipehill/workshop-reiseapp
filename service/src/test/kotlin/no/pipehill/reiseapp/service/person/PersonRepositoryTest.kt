@@ -37,7 +37,7 @@ class PersonRepositoryTest {
 
         val names = repository.findAll().map(Person::name)
         assertThat(names)
-            .hasSize(10)
+            .hasSize(20)
             .contains("Modige Fjell", "Nysgjerrige Glade Skog", "Tålmodige Bjørn")
     }
 
