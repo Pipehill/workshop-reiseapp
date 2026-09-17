@@ -137,6 +137,15 @@ databasen, og hver repositorytest kjøres i en transaksjon som rulles tilbake.
 Uten testvariablene hoppes disse testene over, slik at standardbygget ikke
 krever en kjørende database.
 
+### Pull request-bygg
+
+GitHub Actions kjører `mvn --batch-mode --no-transfer-progress clean verify`
+for pull requests mot `main`. Workflowen ligger i
+`.github/workflows/pull-request.yml` og bruker Ubuntu 24.04, Temurin 25.0.4+7
+og Maven 3.9.16. En separat PostgreSQL 18.6-container og testvariablene over
+sørger for at også databaseintegrasjonstestene kjøres. Ingen secrets må settes opp.
+Maven-avhengigheter caches, og nye commits avbryter eldre kjøringer for samme PR.
+
 ### Bygg og start med run-skript
 
 Når Java, Maven og Podman eller Docker er installert, kan hele den lokale

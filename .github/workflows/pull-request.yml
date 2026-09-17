@@ -1,0 +1,66 @@
+name: Build and test
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      MAVEN_VERSION: 3.9.16
+      REISEAPP_TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/reiseapp_test
+      REISEAPP_TEST_DATABASE_USER: reiseapp_test
+      REISEAPP_TEST_DATABASE_PASSWORD: reiseapp_test
+    services:
+      postgres:
+        image: postgres:18.6-trixie
+        env:
+          POSTGRES_DB: reiseapp_test
+          POSTGRES_USER: reiseapp_test
+          POSTGRES_PASSWORD: reiseapp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U reiseapp_test -d reiseapp_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '25.0.4+7'
+          cache: maven
+          cache-dependency-path: '**/pom.xml'
+
+      - name: Install Maven
+        shell: bash
+        run: |
+          archive="apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+          url="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/${archive}"
+          cd "$RUNNER_TEMP"
+          curl --fail --silent --show-error --location --retry 3 "$url" --output "$archive"
+          curl --fail --silent --show-error --location --retry 3 "$url.sha512" --output "$archive.sha512"
+          checksum=$(awk '{print $1; exit}' "$archive.sha512")
+          printf '%s  %s\n' "$checksum" "$archive" | sha512sum --check --strict
+          tar -xzf "$archive"
+          echo "$RUNNER_TEMP/apache-maven-${MAVEN_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Build and run all tests
+        run: mvn --batch-mode --no-transfer-progress clean verify
