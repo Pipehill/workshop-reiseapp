@@ -84,6 +84,8 @@ class PersonControllerTest {
         assertThat(response.statusCode()).isEqualTo(200)
         assertThat(mapper.readTree(response.body()).get("assignedRoom").get("roomNumber").asInt())
             .isEqualTo(104)
+        assertThat(mapper.readTree(response.body()).get("assignedRoom").get("size").asInt()).isEqualTo(22)
+        assertThat(mapper.readTree(response.body()).get("assignedRoom").has("sizeSquareMeters")).isFalse()
         assertThat(mapper.readTree(response.body()).get("assignedRoom").get("lastRenovatedYear").asText())
             .isEqualTo("2024-01-01")
         assertThat(mapper.readTree(response.body()).get("registrationDate").asText())

@@ -426,14 +426,14 @@ components:
           example: '2026-09-15T10:30:00Z'
     RoomResponse:
       type: object
-      required: [roomNumber, sizeSquareMeters, numberOfBeds, hasBalcony, lastRenovatedYear]
+      required: [roomNumber, size, numberOfBeds, hasBalcony, lastRenovatedYear]
       properties:
         roomNumber:
           type: integer
           format: int32
           minimum: 1
           example: 204
-        sizeSquareMeters:
+        size:
           type: integer
           format: int32
           minimum: 1
