@@ -295,7 +295,7 @@ grunnopplysninger, slik at responsene ikke blir rekursive.
 | `GET /rooms` | HTTP 200 med alle rom sortert på romnummer |
 | `GET /rooms/{roomNumber}` | HTTP 200 med rommet, HTTP 404 hvis det ikke finnes, eller HTTP 400 ved ugyldig romnummer |
 
-Et rom inneholder romnummer, størrelse i kvadratmeter, antall senger, balkongflagg
+Et rom inneholder romnummer, størrelse (`size`), antall senger, balkongflagg
 og dato for siste renovering. `lastRenovatedYear` er en datostreng som
 `2024-01-01`, satt til 1. januar i renoveringsåret, uten klokkeslett eller
 tidssone. Antall senger er begrenset til 1, 2 eller 4.
@@ -501,7 +501,8 @@ En eksplisitt reset av databasevolumet kjører V1–V10 på nytt og gir den
 opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
 Spring Boot 4.1.1 dependency management.
 
-Datoendringene i V1–V4 og V7–V8 og typeendringen for `gender` i V1–V2
+Datoendringene i V1–V4 og V7–V8, typeendringen for `gender` i V1–V2
+og kolonnenavnet `size` i V3–V4
 krever en eksplisitt reset av eksisterende databaser;
 migreringene og startdataene er oppdatert direkte. Bruk fremgangsmåten for reset
 av databasevolumet ovenfor før første oppstart med disse endringene.

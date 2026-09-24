@@ -34,6 +34,7 @@ class RoomServiceTest {
 
         val result = service.findByNumber(204)
         assertThat(result?.roomNumber).isEqualTo(204)
+        assertThat(result?.propertySize).isEqualTo(23)
         assertThat(result?.persons).isEmpty()
         assertThat(service.findByNumber(999)).isNull()
         Mockito.verify(assignments, Mockito.never()).findPersonsByRoomNumber(999)
@@ -69,7 +70,7 @@ class RoomServiceTest {
     private fun room(roomNumber: Int = 204): Room =
         Room(
             roomNumber = roomNumber,
-            sizeSquareMeters = 23,
+            size = 23,
             numberOfBeds = 2,
             hasBalcony = true,
             lastRenovatedYear = LocalDate.of(2024, 1, 1),
@@ -78,7 +79,7 @@ class RoomServiceTest {
     private fun roomResponse(roomNumber: Int = 204): RoomResponse =
         RoomResponse(
             roomNumber = roomNumber,
-            sizeSquareMeters = 23,
+            propertySize = 23,
             numberOfBeds = RoomResponse.NumberOfBeds._2,
             hasBalcony = true,
             lastRenovatedYear = LocalDate.of(2024, 1, 1),

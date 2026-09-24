@@ -197,8 +197,8 @@ og berørte lag mockes.
 Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
 
 Rom-API-et er read-only og tilbyr `GET /rooms` og
-`GET /rooms/{roomNumber}`. Romresponsen inneholder romnummer, størrelse i
-kvadratmeter, antall senger (1, 2 eller 4), balkongflagg og siste renoveringsdato.
+`GET /rooms/{roomNumber}`. Romresponsen inneholder romnummer, størrelse (`size`),
+antall senger (1, 2 eller 4), balkongflagg og siste renoveringsdato.
 
 Datoformatene er bevisst ulike som en bestilt integrasjonsutfordring:
 aktiviteter bruker dato-/klokkeslettstrenger som `13.oct 09:00` uten år/tidssone,
@@ -210,8 +210,8 @@ men verdien er nå en dato som `2024-01-01`. Databasen håndhever 1. januar
 og år fra 1900 til 2100. V1–V4 og V7–V8 er endret direkte med nye dato-/tidsverdier
 i startdataene; eksisterende databaser må resettes eksplisitt av utvikleren.
 API og deltakerrettet dokumentasjon beskriver formatene nøytralt uten
-å avsløre læringsformålet. Romstørrelsesfeltet og aktivitetsnotater
-er foreløpig uendret; oppgave 3–4 venter på bestilling.
+å avsløre læringsformålet. Aktivitetsnotater er foreløpig uendret;
+oppgave 4 venter på bestilling.
 Verifisert 24. september 2026 med `mvn --batch-mode --no-transfer-progress clean verify`
 mot isolert PostgreSQL 18.6: alle 62 tester bestod uten hoppede tester,
 inkludert JSON-formatene i liste-, detalj- og nestede responser, bevaring av
@@ -232,6 +232,22 @@ HTTP-testene dekker 0, 1, 2, ukjente verdier og int32-grensene gjennom det ekte
 servicelaget. Manglende/null `gender`, tekst og heltall utenfor int32 gir 400.
 Databasetestene dekker konverterte startdata, lagring av normalisert verdi
 og avvisning av ukjente koder ved direkte repository-skriving.
+
+Romstørrelsen eksponeres nå som `size` i `RoomResponse`, `RoomDetailsResponse`
+og personens `assignedRoom`. Feltet er fortsatt et påkrevd positivt heltall,
+men måleenheten dokumenteres ikke i API-et eller deltakerrettet dokumentasjon.
+Dette er en bestilt integrasjonsutfordring. Kotlin-entiteten bruker `Room.size`,
+og databasekolonnen heter `size`, med samme verdier og validering.
+V3–V4 er endret direkte, så eksisterende databaser må resettes.
+API-et returnerer ikke lenger `sizeSquareMeters`.
+Generatoren kaller Kotlin-feltet `propertySize` og annoterer det med
+`@JsonProperty("size")`; servicelagene mapper til dette genererte feltet.
+Verifisert 24. september 2026 med `mvn --batch-mode --no-transfer-progress clean verify`
+mot isolert PostgreSQL 18.6: alle 75 tester bestod uten hoppede tester.
+HTTP-testene kontrollerer `size` og fravær av `sizeSquareMeters` i romliste,
+romdetaljer og personens nestede rom. Bygget er også verifisert etter endringen
+av databasekolonnen; SQL-oppslag bekrefter at `room` har `size INTEGER` og
+ingen kolonne med det tidligere navnet.
 
 `service` bruker Spring Data JPA, Flyway 12.4.0, PostgreSQL-modulen for Flyway
 og PostgreSQL JDBC 42.7.13. `V1__create_person_table.sql` oppretter tabellen

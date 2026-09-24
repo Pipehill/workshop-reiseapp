@@ -47,7 +47,7 @@ class PersonService(
             assignedRoom = room?.let {
                 RoomResponse(
                     roomNumber = it.roomNumber,
-                    sizeSquareMeters = it.sizeSquareMeters,
+                    propertySize = it.size,
                     numberOfBeds = RoomResponse.NumberOfBeds.forValue(it.numberOfBeds),
                     hasBalcony = it.hasBalcony,
                     lastRenovatedYear = it.lastRenovatedYear,

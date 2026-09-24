@@ -35,7 +35,7 @@ class RoomRepositoryTest {
         val room = repository.findRoomByNumber(204)
 
         assertThat(room).isNotNull
-        assertThat(room?.sizeSquareMeters).isEqualTo(23)
+        assertThat(room?.size).isEqualTo(23)
         assertThat(room?.numberOfBeds).isEqualTo(2)
         assertThat(room?.hasBalcony).isTrue()
         assertThat(room?.lastRenovatedYear).isEqualTo(LocalDate.of(2024, 1, 1))

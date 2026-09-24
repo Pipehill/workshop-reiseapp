@@ -67,6 +67,8 @@ class RoomControllerTest {
             .isEqualTo(mapper.readTree(mapper.writeValueAsString(listOf(roomResponse()))))
         assertThat(mapper.readTree(response.body()).get(0).get("lastRenovatedYear").asText())
             .isEqualTo("2024-01-01")
+        assertThat(mapper.readTree(response.body()).get(0).get("size").asInt()).isEqualTo(23)
+        assertThat(mapper.readTree(response.body()).get(0).has("sizeSquareMeters")).isFalse()
     }
 
     @Test
@@ -84,6 +86,8 @@ class RoomControllerTest {
             .isEqualTo(mapper.readTree(mapper.writeValueAsString(details)))
         assertThat(mapper.readTree(response.body()).get("lastRenovatedYear").asText())
             .isEqualTo("2024-01-01")
+        assertThat(mapper.readTree(response.body()).get("size").asInt()).isEqualTo(23)
+        assertThat(mapper.readTree(response.body()).has("sizeSquareMeters")).isFalse()
         assertThat(mapper.readTree(response.body()).get("persons").get(0).get("registrationDate").asText())
             .isEqualTo("2026-09-15T10:30:00+02:00")
         assertThat(mapper.readTree(response.body()).get("persons").get(0).get("gender").isIntegralNumber).isTrue()
@@ -108,7 +112,7 @@ class RoomControllerTest {
     private fun roomResponse(): RoomResponse =
         RoomResponse(
             roomNumber = 204,
-            sizeSquareMeters = 23,
+            propertySize = 23,
             numberOfBeds = RoomResponse.NumberOfBeds._2,
             hasBalcony = true,
             lastRenovatedYear = LocalDate.of(2024, 1, 1),

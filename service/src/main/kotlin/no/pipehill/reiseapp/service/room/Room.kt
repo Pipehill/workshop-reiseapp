@@ -12,8 +12,8 @@ class Room(
     @field:Id
     @field:Column(name = "room_number", nullable = false, updatable = false)
     var roomNumber: Int,
-    @field:Column(name = "size_square_meters", nullable = false)
-    var sizeSquareMeters: Int,
+    @field:Column(name = "size", nullable = false)
+    var size: Int,
     @field:Column(name = "number_of_beds", nullable = false)
     var numberOfBeds: Int,
     @field:Column(name = "has_balcony", nullable = false)

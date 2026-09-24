@@ -1,4 +1,4 @@
-INSERT INTO room (room_number, size_square_meters, number_of_beds, has_balcony, last_renovated_year)
+INSERT INTO room (room_number, size, number_of_beds, has_balcony, last_renovated_year)
 VALUES
     (101, 14, 1, FALSE, DATE '2021-01-01'),
     (102, 16, 1, FALSE, DATE '2023-01-01'),

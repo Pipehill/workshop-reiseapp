@@ -17,7 +17,7 @@ class RoomService(
         val room = repository.findRoomByNumber(roomNumber) ?: return null
         return RoomDetailsResponse(
             roomNumber = room.roomNumber,
-            sizeSquareMeters = room.sizeSquareMeters,
+            propertySize = room.size,
             numberOfBeds = RoomDetailsResponse.NumberOfBeds.forValue(room.numberOfBeds),
             hasBalcony = room.hasBalcony,
             lastRenovatedYear = room.lastRenovatedYear,
@@ -41,7 +41,7 @@ class RoomService(
     private fun Room.toResponse(): RoomResponse =
         RoomResponse(
             roomNumber = roomNumber,
-            sizeSquareMeters = sizeSquareMeters,
+            propertySize = size,
             numberOfBeds = RoomResponse.NumberOfBeds.forValue(numberOfBeds),
             hasBalcony = hasBalcony,
             lastRenovatedYear = lastRenovatedYear,

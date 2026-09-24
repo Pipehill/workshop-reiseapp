@@ -81,7 +81,7 @@ class PersonServiceTest {
         val result = service.findById(1)
 
         assertThat(result?.assignedRoom?.roomNumber).isEqualTo(104)
-        assertThat(result?.assignedRoom?.sizeSquareMeters).isEqualTo(22)
+        assertThat(result?.assignedRoom?.propertySize).isEqualTo(22)
         assertThat(result?.assignedRoom?.numberOfBeds?.value).isEqualTo(2)
         assertThat(result?.assignedRoom?.hasBalcony).isFalse()
         assertThat(result?.assignedRoom?.lastRenovatedYear).isEqualTo(LocalDate.of(2024, 1, 1))
