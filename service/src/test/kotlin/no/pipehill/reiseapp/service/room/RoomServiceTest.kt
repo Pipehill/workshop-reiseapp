@@ -1,5 +1,6 @@
 package no.pipehill.reiseapp.service.room
 
+import java.time.LocalDate
 import no.pipehill.reiseapp.api.dto.RoomResponse
 import no.pipehill.reiseapp.service.accommodation.PersonRoomRepository
 import no.pipehill.reiseapp.service.person.Person
@@ -71,7 +72,7 @@ class RoomServiceTest {
             sizeSquareMeters = 23,
             numberOfBeds = 2,
             hasBalcony = true,
-            lastRenovatedYear = 2024,
+            lastRenovatedYear = LocalDate.of(2024, 1, 1),
         )
 
     private fun roomResponse(roomNumber: Int = 204): RoomResponse =
@@ -80,6 +81,6 @@ class RoomServiceTest {
             sizeSquareMeters = 23,
             numberOfBeds = RoomResponse.NumberOfBeds._2,
             hasBalcony = true,
-            lastRenovatedYear = 2024,
+            lastRenovatedYear = LocalDate.of(2024, 1, 1),
         )
 }

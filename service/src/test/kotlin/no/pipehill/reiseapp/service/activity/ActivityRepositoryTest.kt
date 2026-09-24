@@ -1,6 +1,7 @@
 package no.pipehill.reiseapp.service.activity
 
 import java.time.Duration
+import java.time.LocalDateTime
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -40,6 +41,8 @@ class ActivityRepositoryTest {
             assertThat(it.notes).isNotBlank()
         }
         val activity = repository.findActivityById(1)
+        assertThat(activity?.startTime).isEqualTo(LocalDateTime.parse("2026-10-13T09:00:00"))
+        assertThat(activity?.endTime).isEqualTo(LocalDateTime.parse("2026-10-13T15:00:00"))
         assertThat(activity?.notes).isEqualTo(
             "Bruk gode tursko med godt grep.\n" +
                 "Ta med varme klær og vind- og regntett jakke.\n" +
@@ -54,6 +57,22 @@ class ActivityRepositoryTest {
         assertThatThrownBy {
             jdbc.update("UPDATE activity SET end_time = start_time + (? * INTERVAL '1 minute') WHERE id = 1", minutes)
         }.isInstanceOf(DataIntegrityViolationException::class.java)
+    }
+
+    @Test
+    fun `database rejects activities crossing midnight`() {
+        assertThatThrownBy {
+            jdbc.update("UPDATE activity SET start_time = '2026-10-13 23:00:00', " +
+                "end_time = '2026-10-14 02:00:00' WHERE id = 1")
+        }.isInstanceOf(DataIntegrityViolationException::class.java)
+    }
+
+    @Test
+    fun `sorts activities by date before time of day`() {
+        jdbc.update("UPDATE activity SET start_time = '2026-10-14 07:00:00', " +
+            "end_time = '2026-10-14 09:00:00' WHERE id = 5")
+
+        assertThat(repository.findAll().map { it.id }).containsExactly(1L, 2L, 4L, 3L, 5L)
     }
 
     @Test

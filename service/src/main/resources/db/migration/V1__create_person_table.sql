@@ -6,7 +6,7 @@ CREATE TABLE person
     email             VARCHAR(254) NOT NULL,
     phone_number      VARCHAR(32)  NOT NULL,
     gender            VARCHAR(50)  NOT NULL,
-    registration_date DATE         NOT NULL DEFAULT CURRENT_DATE,
+    registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT person_name_not_blank CHECK (btrim(name) <> ''),
     CONSTRAINT person_department_not_blank CHECK (btrim(department) <> ''),

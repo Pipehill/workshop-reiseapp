@@ -1,5 +1,6 @@
 package no.pipehill.reiseapp.service.person
 
+import java.time.OffsetDateTime
 import java.time.LocalDate
 import no.pipehill.reiseapp.api.dto.CreatePersonRequest
 import no.pipehill.reiseapp.api.dto.PersonResponse
@@ -34,6 +35,7 @@ class PersonServiceTest {
 
     @Test
     fun `maps and adds a new person`() {
+        val before = OffsetDateTime.now()
         val request = createRequest()
         val savedPerson = person(id = 11)
         Mockito.`when`(repository.save(Mockito.any(Person::class.java))).thenReturn(savedPerson)
@@ -46,7 +48,8 @@ class PersonServiceTest {
             .usingRecursiveComparison()
             .ignoringFields("registrationDate")
             .isEqualTo(person())
-        assertThat(captor.value.registrationDate).isEqualTo(LocalDate.now())
+        assertThat(captor.value.registrationDate).isBetween(before, OffsetDateTime.now())
+        assertThat(captor.value.registrationDate.offset).isEqualTo(java.time.ZoneOffset.UTC)
     }
 
     @Test
@@ -73,7 +76,7 @@ class PersonServiceTest {
     @Test
     fun `loads assigned room only for person details`() {
         Mockito.`when`(repository.findPersonById(1)).thenReturn(person(id = 1))
-        Mockito.`when`(assignments.findRoomByPersonId(1)).thenReturn(Room(104, 22, 2, false, 2024))
+        Mockito.`when`(assignments.findRoomByPersonId(1)).thenReturn(Room(104, 22, 2, false, LocalDate.of(2024, 1, 1)))
 
         val result = service.findById(1)
 
@@ -81,7 +84,7 @@ class PersonServiceTest {
         assertThat(result?.assignedRoom?.sizeSquareMeters).isEqualTo(22)
         assertThat(result?.assignedRoom?.numberOfBeds?.value).isEqualTo(2)
         assertThat(result?.assignedRoom?.hasBalcony).isFalse()
-        assertThat(result?.assignedRoom?.lastRenovatedYear).isEqualTo(2024)
+        assertThat(result?.assignedRoom?.lastRenovatedYear).isEqualTo(LocalDate.of(2024, 1, 1))
         Mockito.clearInvocations(assignments)
         service.findAll()
         Mockito.verifyNoInteractions(assignments)
@@ -89,7 +92,7 @@ class PersonServiceTest {
 
     @Test
     fun `loads activity only for person details`() {
-        val start = java.time.LocalTime.parse("09:00:00")
+        val start = java.time.LocalDateTime.parse("2026-10-13T09:00:00")
         val activity = no.pipehill.reiseapp.service.activity.Activity(
             "Fjelltur", "Tur med guide", 16, start, start.plusHours(6), "Gode sko", 1)
         Mockito.`when`(repository.findPersonById(1)).thenReturn(person(id = 1))
@@ -97,8 +100,8 @@ class PersonServiceTest {
 
         val result = service.findById(1)?.activity
         assertThat(result).usingRecursiveComparison().ignoringFields("startTime", "endTime").isEqualTo(activity)
-        assertThat(result?.startTime).isEqualTo("09:00:00")
-        assertThat(result?.endTime).isEqualTo("15:00:00")
+        assertThat(result?.startTime).isEqualTo("13.oct 09:00")
+        assertThat(result?.endTime).isEqualTo("13.oct 15:00")
         Mockito.clearInvocations(participation)
         service.findAll()
         Mockito.verifyNoInteractions(participation)
@@ -120,7 +123,7 @@ class PersonServiceTest {
             email = "vennlige.foss@reiseapp.test",
             phoneNumber = "+47 0000 0011",
             gender = "mann",
-            registrationDate = LocalDate.of(2026, 9, 15),
+            registrationDate = OffsetDateTime.parse("2026-09-15T10:30:00+02:00"),
             id = id,
         )
 
@@ -132,6 +135,6 @@ class PersonServiceTest {
             email = "vennlige.foss@reiseapp.test",
             phoneNumber = "+47 0000 0011",
             gender = "mann",
-            registrationDate = LocalDate.of(2026, 9, 15),
+            registrationDate = OffsetDateTime.parse("2026-09-15T10:30:00+02:00"),
         )
 }
