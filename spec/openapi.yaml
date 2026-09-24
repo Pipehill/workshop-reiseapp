@@ -324,8 +324,8 @@ components:
           example: '13.oct 15:00'
         notes:
           type: string
-          description: Free text with practical advice and equipment to bring. An empty string when there is no advice.
-          example: Bring warm clothing and sturdy hiking shoes. Pack food and water in a backpack.
+          description: Text with practical advice and equipment to bring. May contain HTML markup. An empty string when there is no advice.
+          example: '<p>Bring <strong>warm clothing</strong> and sturdy hiking shoes.<br>Pack food and water in a backpack.</p>'
     PersonDetailsResponse:
       allOf:
         - $ref: '#/components/schemas/PersonResponse'

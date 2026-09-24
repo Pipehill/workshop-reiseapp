@@ -52,8 +52,9 @@ class ActivityControllerTest {
     @Test
     fun `lists activities and maps all details through service`() {
         val start = LocalDateTime.parse("2026-10-13T09:00:00")
+        val notes = "<p><strong>Gode sko.</strong><br>Mat &amp; vann.</p>"
         val activity = Activity("Fjelltur", "Tur med guide", 16, start, start.plusHours(6),
-            "Gode sko.\nMat og vann.", 1)
+            notes, 1)
         Mockito.`when`(repository.findAll()).thenReturn(listOf(activity))
         Mockito.`when`(repository.findActivityById(1)).thenReturn(activity)
         Mockito.`when`(participation.findParticipantsByActivityId(1)).thenReturn(listOf(
@@ -71,7 +72,7 @@ class ActivityControllerTest {
         assertThat(body.get("maxParticipants").asInt()).isEqualTo(16)
         assertThat(body.get("startTime").asText()).isEqualTo("13.oct 09:00")
         assertThat(body.get("endTime").asText()).isEqualTo("13.oct 15:00")
-        assertThat(body.get("notes").asText()).isEqualTo("Gode sko.\nMat og vann.")
+        assertThat(body.get("notes").asText()).isEqualTo(notes)
         assertThat(body.has("checklist")).isFalse()
         assertThat(body.get("participants").size()).isEqualTo(1)
         assertThat(body.get("participants").get(0).get("id").asLong()).isEqualTo(11)
@@ -87,7 +88,17 @@ class ActivityControllerTest {
         assertThat(mapper.readTree(list.body()).get(0).get("title")).isEqualTo(body.get("title"))
         assertThat(mapper.readTree(list.body()).get(0).get("startTime").asText()).isEqualTo("13.oct 09:00")
         assertThat(mapper.readTree(list.body()).get(0).get("endTime").asText()).isEqualTo("13.oct 15:00")
+        assertThat(mapper.readTree(list.body()).get(0).get("notes").asText()).isEqualTo(notes)
         Mockito.verifyNoInteractions(participation)
+
+        Mockito.`when`(persons.findPersonById(11)).thenReturn(
+            no.pipehill.reiseapp.service.person.Person(
+                "Test Person", "Test", "test@reiseapp.test", "0000", 1, id = 11),
+        )
+        Mockito.`when`(participation.findActivityByPersonId(11)).thenReturn(activity)
+        val person = request("/persons/11")
+        assertThat(person.statusCode()).isEqualTo(200)
+        assertThat(mapper.readTree(person.body()).get("activity").get("notes").asText()).isEqualTo(notes)
     }
 
     @Test
@@ -113,6 +124,7 @@ class ActivityControllerTest {
         val response = request("/activities")
         assertThat(response.statusCode()).isEqualTo(200)
         assertThat(mapper.readTree(response.body()).get(0).get("startTime").asText()).isEqualTo(expected)
+        assertThat(mapper.readTree(response.body()).get(0).get("notes").asText()).isEmpty()
     }
 
     @Test

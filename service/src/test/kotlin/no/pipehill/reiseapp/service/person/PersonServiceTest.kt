@@ -94,7 +94,7 @@ class PersonServiceTest {
     fun `loads activity only for person details`() {
         val start = java.time.LocalDateTime.parse("2026-10-13T09:00:00")
         val activity = no.pipehill.reiseapp.service.activity.Activity(
-            "Fjelltur", "Tur med guide", 16, start, start.plusHours(6), "Gode sko", 1)
+            "Fjelltur", "Tur med guide", 16, start, start.plusHours(6), "<p><strong>Gode sko</strong></p>", 1)
         Mockito.`when`(repository.findPersonById(1)).thenReturn(person(id = 1))
         Mockito.`when`(participation.findActivityByPersonId(1)).thenReturn(activity)
 

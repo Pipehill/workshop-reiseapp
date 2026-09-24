@@ -210,8 +210,7 @@ men verdien er nå en dato som `2024-01-01`. Databasen håndhever 1. januar
 og år fra 1900 til 2100. V1–V4 og V7–V8 er endret direkte med nye dato-/tidsverdier
 i startdataene; eksisterende databaser må resettes eksplisitt av utvikleren.
 API og deltakerrettet dokumentasjon beskriver formatene nøytralt uten
-å avsløre læringsformålet. Aktivitetsnotater er foreløpig uendret;
-oppgave 4 venter på bestilling.
+å avsløre læringsformålet. Oppgave 1–4 er implementert.
 Verifisert 24. september 2026 med `mvn --batch-mode --no-transfer-progress clean verify`
 mot isolert PostgreSQL 18.6: alle 62 tester bestod uten hoppede tester,
 inkludert JSON-formatene i liste-, detalj- og nestede responser, bevaring av
@@ -320,7 +319,7 @@ JPQL-oppslag i begge retninger og kontroll av seedet sengekapasitet.
 Aktivitets-API-et tilbyr bare `GET /activities` og
 `GET /activities/{activityId}`. Grunnresponsen `ActivityResponse` har ID,
 tittel, beskrivelse, maksantall deltakere, start/slutt som strenger som `13.oct 09:00`
-og `notes` som fritekst (tom streng når det ikke finnes råd).
+og `notes` som tekst med HTML-tagger (tom streng når det ikke finnes råd).
 Listen sorteres på starttidspunkt og ID.
 V7 oppretter `activity` med `notes` (TEXT NOT NULL DEFAULT '') og regler for positiv
 kapasitet og varighet fra 2 til 8 timer inklusive, med slutt etter start samme dag.
@@ -336,6 +335,18 @@ Ikke avslør læringsformålet eller omtale datakvaliteten som bevisst dårlig
 i API-kontrakten, API-responser eller deltakerrettet dokumentasjon.
 Beskriv format og oppførsel nøytralt; begrunnelsen beholdes i prosjektkonteksten her.
 `Activity` mapper `notes` som et vanlig String-felt.
+V8 seeder HTML-notater for alle fem aktiviteter med avsnitt, linjeskift,
+utheving og lister (`p`, `br`, `strong`, `em`, `ul`, `ol`, `li`). Taggene lagres
+i TEXT-feltet og returneres uendret som del av JSON-strengen i aktivitetsliste,
+aktivitetsdetaljer og personens nestede aktivitet. Ingen HTML-rensing eller
+HTML-escaping legges inn i backend. Dette er en uttrykkelig bestilt
+integrasjonsutfordring: frontend må velge hvordan innholdet skal behandles
+og vises. Startdataene bruker bare formatering, uten skript eller hendelsesattributter.
+V8 er endret direkte, så eksisterende databaser må resettes for nye startdata.
+Verifisert 24. september 2026 med `mvn --batch-mode --no-transfer-progress clean verify`
+mot isolert PostgreSQL 18.6: alle 75 tester bestod uten hoppede tester.
+Testene kontrollerer HTML i seedede notater, uendrede tagger og HTML-entiteter
+i liste-, detalj- og nestede HTTP-responser, samt tom streng uten notater.
 `ActivityRepository` bruker JPQL for liste og detaljoppslag.
 `ActivityService` mapper innenfor read-only-transaksjoner.
 Verifisert med `mvn clean verify` mot isolert PostgreSQL 18.6:

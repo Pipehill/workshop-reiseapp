@@ -329,7 +329,7 @@ Dette hindrer overbooking ved samtidige API-kall og sikrer høyst ett rom per pe
 
 Begge responsene inneholder `id`, `title`, `description`,
 `maxParticipants`, `startTime`, `endTime` og `notes` (fritekst med
-praktiske råd og utstyr, tom streng hvis det ikke finnes råd).
+praktiske råd og utstyr, kan inneholde HTML-tagger, tom streng hvis det ikke finnes råd).
 Tidene er strenger med dag, engelsk månedsforkortelse med små bokstaver og
 klokkeslett, for eksempel `13.oct 09:00` og `13.oct 15:00`.
 Dag har ikke innledende null; årstall, sekunder og tidssone er utelatt.
@@ -502,7 +502,7 @@ opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
 Spring Boot 4.1.1 dependency management.
 
 Datoendringene i V1–V4 og V7–V8, typeendringen for `gender` i V1–V2
-og kolonnenavnet `size` i V3–V4
+kolonnenavnet `size` i V3–V4 og HTML-notatene i V8
 krever en eksplisitt reset av eksisterende databaser;
 migreringene og startdataene er oppdatert direkte. Bruk fremgangsmåten for reset
 av databasevolumet ovenfor før første oppstart med disse endringene.

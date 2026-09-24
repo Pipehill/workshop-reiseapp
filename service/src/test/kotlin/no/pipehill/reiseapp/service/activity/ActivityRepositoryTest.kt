@@ -31,22 +31,22 @@ class ActivityRepositoryTest {
     private lateinit var jdbc: JdbcTemplate
 
     @Test
-    fun `reads five seeded activities with notes`() {
+    fun `reads five seeded activities with HTML notes`() {
         val activities = repository.findAll()
         assertThat(activities).hasSize(5)
         assertThat(activities.map { it.id }).containsExactly(5L, 1L, 2L, 4L, 3L)
         activities.forEach {
             assertThat(Duration.between(it.startTime, it.endTime).toHours()).isBetween(2L, 8L)
             assertThat(it.maxParticipants).isPositive()
-            assertThat(it.notes).isNotBlank()
+            assertThat(it.notes).contains("<p>", "</p>")
         }
         val activity = repository.findActivityById(1)
         assertThat(activity?.startTime).isEqualTo(LocalDateTime.parse("2026-10-13T09:00:00"))
         assertThat(activity?.endTime).isEqualTo(LocalDateTime.parse("2026-10-13T15:00:00"))
         assertThat(activity?.notes).isEqualTo(
-            "Bruk gode tursko med godt grep.\n" +
-                "Ta med varme klær og vind- og regntett jakke.\n" +
-                "Pakk matpakke og vann i en komfortabel sekk.",
+            "<p>Bruk <strong>gode tursko</strong> med godt grep.</p><ul>" +
+                "<li>Ta med varme klær og vind- og regntett jakke.</li>" +
+                "<li>Pakk matpakke og vann i en komfortabel sekk.</li></ul>",
         )
         assertThat(repository.findActivityById(Long.MAX_VALUE)).isNull()
     }
