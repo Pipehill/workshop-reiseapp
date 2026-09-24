@@ -53,7 +53,7 @@ class RoomServiceTest {
 
     @Test
     fun `loads assigned people only for room details`() {
-        val person = Person("Test Person", "Test", "test@reiseapp.test", "+47 0000 0011", "mann", id = 11)
+        val person = Person("Test Person", "Test", "test@reiseapp.test", "+47 0000 0011", 1, id = 11)
         Mockito.`when`(repository.findRoomByNumber(204)).thenReturn(room())
         Mockito.`when`(assignments.findPersonsByRoomNumber(204)).thenReturn(listOf(person))
 

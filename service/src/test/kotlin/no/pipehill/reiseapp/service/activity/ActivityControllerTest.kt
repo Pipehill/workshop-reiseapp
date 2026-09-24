@@ -58,7 +58,7 @@ class ActivityControllerTest {
         Mockito.`when`(repository.findActivityById(1)).thenReturn(activity)
         Mockito.`when`(participation.findParticipantsByActivityId(1)).thenReturn(listOf(
             no.pipehill.reiseapp.service.person.Person(
-                "Test Person", "Test", "test@reiseapp.test", "+47 0000 0011", "mann",
+                "Test Person", "Test", "test@reiseapp.test", "+47 0000 0011", 1,
                 registrationDate = OffsetDateTime.parse("2026-09-15T10:30:00Z"), id = 11)))
 
         val response = request("/activities/1")
@@ -75,6 +75,8 @@ class ActivityControllerTest {
         assertThat(body.has("checklist")).isFalse()
         assertThat(body.get("participants").size()).isEqualTo(1)
         assertThat(body.get("participants").get(0).get("id").asLong()).isEqualTo(11)
+        assertThat(body.get("participants").get(0).get("gender").isIntegralNumber).isTrue()
+        assertThat(body.get("participants").get(0).get("gender").asInt()).isEqualTo(1)
         assertThat(body.get("participants").get(0).get("registrationDate").asText())
             .isEqualTo("2026-09-15T10:30:00Z")
         assertThat(body.get("participants").get(0).has("activity")).isFalse()

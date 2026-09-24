@@ -385,10 +385,8 @@ components:
           maxLength: 32
           example: +47 0000 0011
         gender:
-          type: string
-          minLength: 1
-          maxLength: 50
-          example: female
+          type: integer
+          format: int32
     PersonResponse:
       type: object
       required: [id, name, department, email, phoneNumber, gender, registrationDate]
@@ -419,10 +417,8 @@ components:
           maxLength: 32
           example: +47 0000 0011
         gender:
-          type: string
-          minLength: 1
-          maxLength: 50
-          example: female
+          type: integer
+          format: int32
         registrationDate:
           type: string
           format: date-time

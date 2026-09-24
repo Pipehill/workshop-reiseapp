@@ -210,13 +210,28 @@ men verdien er nå en dato som `2024-01-01`. Databasen håndhever 1. januar
 og år fra 1900 til 2100. V1–V4 og V7–V8 er endret direkte med nye dato-/tidsverdier
 i startdataene; eksisterende databaser må resettes eksplisitt av utvikleren.
 API og deltakerrettet dokumentasjon beskriver formatene nøytralt uten
-å avsløre læringsformålet. Gender, romstørrelsesfeltet og aktivitetsnotater
-er foreløpig uendret; disse endringene venter på gjennomgang av datotrinnet.
+å avsløre læringsformålet. Romstørrelsesfeltet og aktivitetsnotater
+er foreløpig uendret; oppgave 3–4 venter på bestilling.
 Verifisert 24. september 2026 med `mvn --batch-mode --no-transfer-progress clean verify`
 mot isolert PostgreSQL 18.6: alle 62 tester bestod uten hoppede tester,
 inkludert JSON-formatene i liste-, detalj- og nestede responser, bevaring av
 registreringstidspunkt ved lagring med offset, databaseregler for romdatoer,
 aktiviteters månedsformat, datosortering og avvisning av aktivitet over midnatt.
+
+`gender` bruker nå `Int` / PostgreSQL `INTEGER`: 1 = mann, 2 = kvinne,
+0 = annet. `PersonService` normaliserer alle andre int32-verdier til 0 før
+lagring. Databasen tillater bare 0, 1 og 2. V1–V2 er oppdatert direkte,
+og eksisterende databaser må resettes. OpenAPI oppgir bare påkrevd
+`integer` / `int32`, uten enum, verdiområde, eksempel eller beskrivelse
+av kodene eller normaliseringen. Dette er en bestilt integrasjonsutfordring;
+ikke dokumenter betydningen eller normaliseringen i API-et eller
+deltakerrettet dokumentasjon. Alle personresponser, også nestede, bruker heltall.
+Verifisert 24. september 2026 med `mvn --batch-mode --no-transfer-progress clean verify`
+mot isolert PostgreSQL 18.6: alle 75 tester bestod uten hoppede tester.
+HTTP-testene dekker 0, 1, 2, ukjente verdier og int32-grensene gjennom det ekte
+servicelaget. Manglende/null `gender`, tekst og heltall utenfor int32 gir 400.
+Databasetestene dekker konverterte startdata, lagring av normalisert verdi
+og avvisning av ukjente koder ved direkte repository-skriving.
 
 `service` bruker Spring Data JPA, Flyway 12.4.0, PostgreSQL-modulen for Flyway
 og PostgreSQL JDBC 42.7.13. `V1__create_person_table.sql` oppretter tabellen

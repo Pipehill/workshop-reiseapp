@@ -473,7 +473,7 @@ Spring Boot kjører Flyway 12.4.0 ved oppstart. Migreringen
 | `department` | `VARCHAR(100)` | Påkrevd og kan ikke være blank |
 | `email` | `VARCHAR(254)` | Påkrevd, ikke blank og unik uavhengig av store/små bokstaver |
 | `phone_number` | `VARCHAR(32)` | Påkrevd og kan ikke være blank |
-| `gender` | `VARCHAR(50)` | Påkrevd og kan ikke være blank |
+| `gender` | `INTEGER` | Påkrevd |
 | `registration_date` | `TIMESTAMP WITH TIME ZONE` | Påkrevd, standard er databasens gjeldende tidspunkt |
 
 `V2__seed_person_table.sql` legger inn 20 fiktive personer med faste data.
@@ -501,7 +501,8 @@ En eksplisitt reset av databasevolumet kjører V1–V10 på nytt og gir den
 opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
 Spring Boot 4.1.1 dependency management.
 
-Datoendringene i V1–V4 og V7–V8 krever en eksplisitt reset av eksisterende databaser;
+Datoendringene i V1–V4 og V7–V8 og typeendringen for `gender` i V1–V2
+krever en eksplisitt reset av eksisterende databaser;
 migreringene og startdataene er oppdatert direkte. Bruk fremgangsmåten for reset
 av databasevolumet ovenfor før første oppstart med disse endringene.
 

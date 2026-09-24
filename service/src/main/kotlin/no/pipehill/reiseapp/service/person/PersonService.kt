@@ -65,7 +65,7 @@ class PersonService(
             department = department,
             email = email,
             phoneNumber = phoneNumber,
-            gender = gender,
+            gender = gender.takeIf { it == 1 || it == 2 } ?: 0,
         )
 
     private fun Person.toResponse(): PersonResponse =
