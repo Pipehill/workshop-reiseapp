@@ -1,36 +1,21 @@
 package no.pipehill.reiseapp.service.person
 
-import java.time.OffsetDateTime
 import jakarta.persistence.EntityManager
-import no.pipehill.reiseapp.api.dto.CreatePersonRequest
+import java.time.OffsetDateTime
+import no.pipehill.reiseapp.service.support.DatabaseTest
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.dao.DataIntegrityViolationException
-import org.springframework.transaction.annotation.Transactional
 
-@EnabledIfEnvironmentVariable(named = "REISEAPP_TEST_DATABASE_URL", matches = ".+")
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.NONE,
-    properties = [
-        "spring.datasource.url=\${REISEAPP_TEST_DATABASE_URL}",
-        "spring.datasource.username=\${REISEAPP_TEST_DATABASE_USER}",
-        "spring.datasource.password=\${REISEAPP_TEST_DATABASE_PASSWORD}",
-    ],
-)
-@Transactional
+@DatabaseTest
 class PersonRepositoryTest {
     @Autowired
     private lateinit var repository: PersonRepository
 
     @Autowired
     private lateinit var entityManager: EntityManager
-
-    @Autowired
-    private lateinit var service: PersonService
 
     @Test
     fun `finds one or all persons`() {
@@ -55,36 +40,6 @@ class PersonRepositoryTest {
     }
 
     @Test
-    fun `saves and returns a person with generated fields`() {
-        val before = OffsetDateTime.now()
-        val added = repository.save(
-            Person(
-                name = "Vennlige Foss",
-                department = "Test",
-                email = "vennlige.foss@reiseapp.test",
-                phoneNumber = "+47 0000 0011",
-                gender = 1,
-            ),
-        )
-
-        assertThat(added.id).isNotNull().isPositive()
-        assertThat(added.registrationDate)
-            .isBetween(before, OffsetDateTime.now())
-        assertThat(repository.findPersonById(requireNotNull(added.id))).isSameAs(added)
-        assertThat(repository.findAll()).contains(added)
-    }
-
-    @Test
-    fun `persists normalized gender through service`() {
-        val response = service.add(CreatePersonRequest("Test Person", "Test", "gender@reiseapp.test", "0000", -5))
-        entityManager.flush()
-        entityManager.clear()
-
-        assertThat(response.gender).isZero()
-        assertThat(repository.findPersonById(response.id)?.gender).isZero()
-    }
-
-    @Test
     fun `database rejects unsupported gender when bypassing service`() {
         assertThatThrownBy {
             repository.saveAndFlush(Person("Test Person", "Test", "invalid-gender@reiseapp.test", "0000", 3))
@@ -92,14 +47,16 @@ class PersonRepositoryTest {
     }
 
     @Test
-    fun `preserves registration instant after reloading a timestamp with an offset`() {
+    fun `generates id and persists person fields and registration instant`() {
         val timestamp = OffsetDateTime.parse("2026-09-15T10:30:45.123456+02:00")
         val added = repository.saveAndFlush(
             Person("Timestamp Test", "Test", "timestamp@reiseapp.test", "0000", 1, timestamp),
         )
+        assertThat(added.id).describedAs("generated person id").isNotNull().isPositive()
         entityManager.clear()
 
         val reloaded = checkNotNull(repository.findPersonById(checkNotNull(added.id)))
+        assertThat(reloaded).usingRecursiveComparison().ignoringFields("registrationDate").isEqualTo(added)
         assertThat(reloaded.registrationDate.toInstant()).isEqualTo(timestamp.toInstant())
     }
 }

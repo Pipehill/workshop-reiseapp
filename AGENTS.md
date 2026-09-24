@@ -191,9 +191,11 @@ med HTTP 200 og `{"status":"UP"}`. Dette er en livssjekk for API-et og kontrolle
 ikke databasetilkoblingen. Det tidligere `/ping`-endepunktet er fjernet.
 Person-API-et tilbyr `GET /persons`,
 `GET /persons/{personId}` og `POST /persons`; kontrakten genererer egne DTO-er
-for oppretting og respons. HTTP-testene starter Spring Boot på tilfeldige porter
-og trenger ikke en ekstern database fordi databaseautokonfigurasjonen deaktiveres
-og berørte lag mockes.
+for oppretting og respons. HTTP-testene starter bare relevante Spring-komponenter
+på tilfeldige porter via `@HttpApiTest`, med felles `ApiExceptionHandler` og
+uten databaseautokonfigurasjon. Person-, rom- og aktivitets-API-testene bruker
+ekte controller og service med mockede repositoryer. Skrivecontrollerne for
+romtildeling/påmelding mocker bare sin egen service; helsetesten trenger ingen mocks.
 Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
 
 Rom-API-et er read-only og tilbyr `GET /rooms` og
@@ -229,7 +231,7 @@ Verifisert 24. september 2026 med `mvn --batch-mode --no-transfer-progress clean
 mot isolert PostgreSQL 18.6: alle 75 tester bestod uten hoppede tester.
 HTTP-testene dekker 0, 1, 2, ukjente verdier og int32-grensene gjennom det ekte
 servicelaget. Manglende/null `gender`, tekst og heltall utenfor int32 gir 400.
-Databasetestene dekker konverterte startdata, lagring av normalisert verdi
+Databasetestene dekker konverterte startdata, lagring av personfelter
 og avvisning av ukjente koder ved direkte repository-skriving.
 
 Romstørrelsen eksponeres nå som `size` i `RoomResponse`, `RoomDetailsResponse`
@@ -279,15 +281,28 @@ hoppes de over. Testene er verifisert mot en isolert PostgreSQL 18.6-database.
 `PersonRepository`. Det mapper mellom genererte API-DTO-er og JPA-entiteten med
 private funksjoner direkte i servicelaget; lesemetodene bruker read-only-
 transaksjoner. `PersonController` implementerer det genererte `PersonApi`-
-grensesnittet og håndterer bare HTTP-responsene. Servicelaget har isolerte
-enhetstester med mocket repository, og controllerens HTTP-oppførsel og
-inputvalidering er testet separat.
+grensesnittet og håndterer bare HTTP-responsene. `PersonApiTest` samler testing av
+HTTP, inputvalidering, gender-normalisering og mapping. De tidligere
+`PersonControllerTest`, `PersonServiceTest` og `PersonGenderTest` er slått sammen.
 
 `RoomRepository` bruker JPQL for detaljoppslag og sortert liste. `RoomService`
 eier read-only-transaksjonene og mapper til generert DTO, mens `RoomController`
-implementerer `RoomApi`. Romlaget har enhets- og HTTP-tester; repositorytesten
+implementerer `RoomApi`. `RoomApiTest` samler HTTP- og mappingtester; repositorytesten
 kjøres sammen med de øvrige databaseintegrasjonstestene når testdatabasen er
 konfigurert.
+
+Teststrukturen er forenklet: `*ApiTest` eier JSON-kontrakten og enkel mapping,
+`*RepositoryTest` eier lagring og spørringer, og skriveoperasjonenes servicetester
+eier transaksjoner, kapasitet og samtidighet. Repositorytester går ikke via
+andre servicelag, og rom-/aktivitetstester gjentar ikke alle personfeltene.
+`support/` inneholder `@HttpApiTest`, HTTP-hjelpere, `@DatabaseTest`, små
+testfixtures og en felles `concurrently`-funksjon med tidsavbrudd og opprydding.
+Bruk eksisterende AssertJ `.as(...)` og JUnit `assertAll(...)` for feilkontekst
+og grupperte assertions; det er ikke innført et ekstra assertion-bibliotek.
+Refaktoreringen er verifisert 24. september 2026 med
+`mvn --batch-mode --no-transfer-progress clean verify`: alle 70 tester bestod
+mot isolert PostgreSQL 18.6. Uten databasevariabler bestod 37 tester, mens
+databasetestene ble hoppet over. Produksjonskode og API-kontrakt er uendret.
 
 Romfordeling lagres i `person_room` via JPA-entiteten `PersonRoom`.
 V5 oppretter tabellen med person-ID som primærnøkkel (høyst ett rom per person),

@@ -126,14 +126,28 @@ Endre spesifikasjonen og bygg på nytt; generert kode skal ikke redigeres
 eller sjekkes inn. Bruk `clean verify` etter sletting eller omdøping av
 endepunkter/modeller slik at gamle genererte filer fjernes.
 
-`verify` kontrollerer validering, generering, kompilering og pakking. HTTP-
-testene starter tjenesten på tilfeldige porter og verifiserer `/health` samt
-uthenting, oppretting, validering og ikke-funnet-respons for personendepunktene.
+`verify` kontrollerer validering, generering, kompilering, tester og pakking.
+Testene er delt etter ansvar:
+
+| Tester | Ansvar |
+| --- | --- |
+| `PersonApiTest`, `RoomApiTest`, `ActivityApiTest` | HTTP, JSON-format og mapping gjennom ekte controller og service, med mockede repositoryer |
+| `AccommodationControllerTest`, `ParticipationControllerTest`, `HealthTest` | HTTP-status, inputvalidering og helsesjekk |
+| `*RepositoryTest` | PostgreSQL-skjema, startdata, spørringer og databaseregler |
+| `AccommodationServiceTest`, `ParticipationServiceTest` | Endringer i koblinger, kapasitet, idempotens og samtidighet mot PostgreSQL |
+
+API-testene starter bare relevante komponenter på tilfeldige porter. Felles
+oppsett ligger i `service/src/test/kotlin/no/pipehill/reiseapp/service/support`.
+AssertJs `.as(...)` og JUnits `assertAll(...)` gir navngitte sjekkpunkter;
+HTTP-feil viser metode, sti og respons. Nestede objekter testes for koblingen
+og relevant mapping, mens objektets grunnfelter testes i dets eget API.
 
 Repository-integrasjonstestene aktiveres når `REISEAPP_TEST_DATABASE_URL`,
 `REISEAPP_TEST_DATABASE_USER` og `REISEAPP_TEST_DATABASE_PASSWORD` er satt.
 Bruk en egen, tom PostgreSQL-database til disse testene. Flyway initialiserer
 databasen, og hver repositorytest kjøres i en transaksjon som rulles tilbake.
+De samme variablene aktiverer servicetestene mot PostgreSQL. Samtidighetstestene
+kjører uten testtransaksjon og rydder sine egne data i `finally`.
 Uten testvariablene hoppes disse testene over, slik at standardbygget ikke
 krever en kjørende database.
 

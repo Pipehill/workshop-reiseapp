@@ -1,51 +1,34 @@
 package no.pipehill.reiseapp.service.activity
 
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import no.pipehill.reiseapp.service.person.PersonService
+import no.pipehill.reiseapp.service.support.concurrently
+import no.pipehill.reiseapp.service.support.DatabaseTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
-@EnabledIfEnvironmentVariable(named = "REISEAPP_TEST_DATABASE_URL", matches = ".+")
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.NONE,
-    properties = [
-        "spring.datasource.url=\${REISEAPP_TEST_DATABASE_URL}",
-        "spring.datasource.username=\${REISEAPP_TEST_DATABASE_USER}",
-        "spring.datasource.password=\${REISEAPP_TEST_DATABASE_PASSWORD}",
-    ],
-)
-@Transactional
+@DatabaseTest
 class ParticipationServiceTest {
     @Autowired
     private lateinit var service: ParticipationService
     @Autowired
     private lateinit var participation: PersonActivityRepository
     @Autowired
-    private lateinit var persons: PersonService
-    @Autowired
-    private lateinit var activities: ActivityService
-    @Autowired
     private lateinit var jdbc: JdbcTemplate
 
     @Test
-    fun `switching activity updates both detail views and cancellation removes enrollment`() {
+    fun `switches activity then cancels enrollment`() {
         assertThat(service.enrollInActivity(1, 2)).isEqualTo(ActivityEnrollmentResult.SUCCESS)
         assertThat(participation.countParticipantsByActivityId(2)).isEqualTo(5)
-        assertThat(persons.findById(1)?.activity?.id).isEqualTo(2)
-        assertThat(activities.findById(2)?.participants?.map { it.id }).contains(1L)
-        assertThat(activities.findById(1)?.participants?.map { it.id }).doesNotContain(1L)
+        assertThat(participation.findActivityByPersonId(1)?.id).isEqualTo(2)
+        assertThat(participation.findParticipantsByActivityId(2).map { it.id }).contains(1L)
+        assertThat(participation.findParticipantsByActivityId(1).map { it.id }).doesNotContain(1L)
         assertThat(service.cancelActivityEnrollment(1)).isEqualTo(ActivityEnrollmentResult.SUCCESS)
         assertThat(service.cancelActivityEnrollment(1)).isEqualTo(ActivityEnrollmentResult.SUCCESS)
-        assertThat(persons.findById(1)?.activity).isNull()
-        assertThat(activities.findById(2)?.participants?.map { it.id }).doesNotContain(1L)
+        assertThat(participation.findActivityByPersonId(1)).isNull()
+        assertThat(participation.findParticipantsByActivityId(2).map { it.id }).doesNotContain(1L)
     }
 
     @Test
@@ -53,7 +36,7 @@ class ParticipationServiceTest {
         jdbc.update("UPDATE activity SET max_participants = 4 WHERE id = 2")
         assertThat(service.enrollInActivity(1, 2)).isEqualTo(ActivityEnrollmentResult.ACTIVITY_FULL)
         assertThat(service.enrollInActivity(1, Long.MAX_VALUE)).isEqualTo(ActivityEnrollmentResult.ACTIVITY_NOT_FOUND)
-        assertThat(persons.findById(1)?.activity?.id).isEqualTo(1)
+        assertThat(participation.findActivityByPersonId(1)?.id).isEqualTo(1)
         assertThat(service.enrollInActivity(Long.MAX_VALUE, 1)).isEqualTo(ActivityEnrollmentResult.PERSON_NOT_FOUND)
         assertThat(service.cancelActivityEnrollment(Long.MAX_VALUE)).isEqualTo(ActivityEnrollmentResult.PERSON_NOT_FOUND)
     }
@@ -67,7 +50,7 @@ class ParticipationServiceTest {
         assertThat(service.enrollInActivity(9, 1)).isEqualTo(ActivityEnrollmentResult.SUCCESS)
         assertThat(participation.countParticipantsByActivityId(1)).isEqualTo(4)
         assertThat(service.enrollInActivity(1, 1)).isEqualTo(ActivityEnrollmentResult.ACTIVITY_FULL)
-        assertThat(persons.findById(1)?.activity).isNull()
+        assertThat(participation.findActivityByPersonId(1)).isNull()
         assertThat(service.enrollInActivity(1, 2)).isEqualTo(ActivityEnrollmentResult.SUCCESS)
     }
 
@@ -109,31 +92,6 @@ class ParticipationServiceTest {
             )).containsOnly(ActivityEnrollmentResult.SUCCESS)
             assertThat(participation.findActivityByPersonId(first)?.id).isEqualTo(activityB)
             assertThat(participation.findActivityByPersonId(second)?.id).isEqualTo(activityA)
-        }
-    }
-
-    private fun concurrently(
-        first: () -> ActivityEnrollmentResult,
-        second: () -> ActivityEnrollmentResult,
-    ): List<ActivityEnrollmentResult> {
-        val ready = CountDownLatch(2)
-        val start = CountDownLatch(1)
-        val executor = Executors.newFixedThreadPool(2)
-        try {
-            val futures = listOf(first, second).map { action ->
-                executor.submit<ActivityEnrollmentResult> {
-                    ready.countDown()
-                    check(start.await(10, TimeUnit.SECONDS))
-                    action()
-                }
-            }
-            check(ready.await(10, TimeUnit.SECONDS))
-            start.countDown()
-            return futures.map { it.get(15, TimeUnit.SECONDS) }
-        } finally {
-            start.countDown()
-            executor.shutdownNow()
-            executor.awaitTermination(10, TimeUnit.SECONDS)
         }
     }
 
