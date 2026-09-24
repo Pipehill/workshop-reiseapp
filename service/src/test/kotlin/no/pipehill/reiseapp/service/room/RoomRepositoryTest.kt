@@ -1,28 +1,17 @@
 package no.pipehill.reiseapp.service.room
 
 import java.time.LocalDate
+import no.pipehill.reiseapp.service.support.DatabaseTest
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.transaction.annotation.Transactional
 
-@EnabledIfEnvironmentVariable(named = "REISEAPP_TEST_DATABASE_URL", matches = ".+")
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.NONE,
-    properties = [
-        "spring.datasource.url=\${REISEAPP_TEST_DATABASE_URL}",
-        "spring.datasource.username=\${REISEAPP_TEST_DATABASE_USER}",
-        "spring.datasource.password=\${REISEAPP_TEST_DATABASE_PASSWORD}",
-    ],
-)
-@Transactional
+@DatabaseTest
 class RoomRepositoryTest {
     @Autowired
     private lateinit var repository: RoomRepository

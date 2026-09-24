@@ -1,60 +1,42 @@
 package no.pipehill.reiseapp.service.accommodation
 
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import no.pipehill.reiseapp.service.person.PersonService
-import no.pipehill.reiseapp.service.room.RoomService
+import no.pipehill.reiseapp.service.support.concurrently
+import no.pipehill.reiseapp.service.support.DatabaseTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
-@EnabledIfEnvironmentVariable(named = "REISEAPP_TEST_DATABASE_URL", matches = ".+")
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.NONE,
-    properties = [
-        "spring.datasource.url=\${REISEAPP_TEST_DATABASE_URL}",
-        "spring.datasource.username=\${REISEAPP_TEST_DATABASE_USER}",
-        "spring.datasource.password=\${REISEAPP_TEST_DATABASE_PASSWORD}",
-    ],
-)
-@Transactional
+@DatabaseTest
 class AccommodationServiceTest {
     @Autowired
     private lateinit var service: AccommodationService
     @Autowired
     private lateinit var assignments: PersonRoomRepository
     @Autowired
-    private lateinit var persons: PersonService
-    @Autowired
-    private lateinit var rooms: RoomService
-    @Autowired
     private lateinit var jdbc: JdbcTemplate
 
     @Test
-    fun `moves person and updates detail views then removes assignment`() {
+    fun `moves a person then removes the assignment`() {
         assertThat(service.assignRoom(1, 106)).isEqualTo(RoomAssignmentResult.SUCCESS)
         // Flush the managed assignment before bulk deletion later in this test.
         assertThat(assignments.countPersonsByRoomNumber(106)).isEqualTo(1)
-        assertThat(persons.findById(1)?.assignedRoom?.roomNumber).isEqualTo(106)
-        assertThat(rooms.findByNumber(106)?.persons?.map { it.id }).contains(1L)
-        assertThat(rooms.findByNumber(101)?.persons).isEmpty()
+        assertThat(assignments.findRoomByPersonId(1)?.roomNumber).isEqualTo(106)
+        assertThat(assignments.findPersonsByRoomNumber(106).map { it.id }).contains(1L)
+        assertThat(assignments.findPersonsByRoomNumber(101)).isEmpty()
         assertThat(service.removeRoomAssignment(1)).isEqualTo(RoomAssignmentResult.SUCCESS)
         assertThat(service.removeRoomAssignment(1)).isEqualTo(RoomAssignmentResult.SUCCESS)
-        assertThat(persons.findById(1)?.assignedRoom).isNull()
-        assertThat(rooms.findByNumber(106)?.persons).isEmpty()
+        assertThat(assignments.findRoomByPersonId(1)).isNull()
+        assertThat(assignments.findPersonsByRoomNumber(106)).isEmpty()
     }
 
     @Test
     fun `full and missing rooms leave existing assignment intact`() {
         assertThat(service.assignRoom(1, 104)).isEqualTo(RoomAssignmentResult.ROOM_FULL)
         assertThat(service.assignRoom(1, 99999)).isEqualTo(RoomAssignmentResult.ROOM_NOT_FOUND)
-        assertThat(persons.findById(1)?.assignedRoom?.roomNumber).isEqualTo(101)
+        assertThat(assignments.findRoomByPersonId(1)?.roomNumber).isEqualTo(101)
         assertThat(service.assignRoom(Long.MAX_VALUE, 106)).isEqualTo(RoomAssignmentResult.PERSON_NOT_FOUND)
         assertThat(service.removeRoomAssignment(Long.MAX_VALUE)).isEqualTo(RoomAssignmentResult.PERSON_NOT_FOUND)
     }
@@ -67,7 +49,7 @@ class AccommodationServiceTest {
         assertThat(service.assignRoom(2, 101)).isEqualTo(RoomAssignmentResult.SUCCESS)
         assertThat(assignments.countPersonsByRoomNumber(101)).isEqualTo(1)
         assertThat(service.assignRoom(1, 101)).isEqualTo(RoomAssignmentResult.ROOM_FULL)
-        assertThat(persons.findById(1)?.assignedRoom).isNull()
+        assertThat(assignments.findRoomByPersonId(1)).isNull()
         assertThat(service.assignRoom(1, 106)).isEqualTo(RoomAssignmentResult.SUCCESS)
     }
 
@@ -95,31 +77,6 @@ class AccommodationServiceTest {
             assertThat(results).containsOnly(RoomAssignmentResult.SUCCESS)
             assertThat(assignments.countPersonsByRoomNumber(9901) +
                 assignments.countPersonsByRoomNumber(9902)).isEqualTo(1)
-        }
-    }
-
-    private fun concurrently(
-        first: () -> RoomAssignmentResult,
-        second: () -> RoomAssignmentResult,
-    ): List<RoomAssignmentResult> {
-        val ready = CountDownLatch(2)
-        val start = CountDownLatch(1)
-        val executor = Executors.newFixedThreadPool(2)
-        try {
-            val futures = listOf(first, second).map { action ->
-                executor.submit<RoomAssignmentResult> {
-                    ready.countDown()
-                    check(start.await(10, TimeUnit.SECONDS))
-                    action()
-                }
-            }
-            check(ready.await(10, TimeUnit.SECONDS))
-            start.countDown()
-            return futures.map { it.get(15, TimeUnit.SECONDS) }
-        } finally {
-            start.countDown()
-            executor.shutdownNow()
-            executor.awaitTermination(10, TimeUnit.SECONDS)
         }
     }
 
