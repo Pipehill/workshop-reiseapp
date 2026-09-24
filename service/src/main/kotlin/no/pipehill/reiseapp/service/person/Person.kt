@@ -20,8 +20,8 @@ class Person(
     var email: String,
     @field:Column(name = "phone_number", nullable = false, length = 32)
     var phoneNumber: String,
-    @field:Column(nullable = false, length = 50)
-    var gender: String,
+    @field:Column(nullable = false)
+    var gender: Int,
     @field:Column(name = "registration_date", nullable = false, updatable = false)
     var registrationDate: OffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC),
     @field:Id

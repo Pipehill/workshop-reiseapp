@@ -132,7 +132,7 @@ class AccommodationServiceTest {
                 roomNumbers.add(number)
                 personIds.add(checkNotNull(jdbc.queryForObject(
                     "INSERT INTO person (name, department, email, phone_number, gender) " +
-                        "VALUES ('Test', 'Test', ?, '0000', 'ukjent') RETURNING id",
+                        "VALUES ('Test', 'Test', ?, '0000', 0) RETURNING id",
                     Long::class.java, "room-concurrency-$number@reiseapp.test",
                 )))
             }

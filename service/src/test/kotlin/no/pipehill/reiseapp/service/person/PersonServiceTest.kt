@@ -113,7 +113,7 @@ class PersonServiceTest {
             department = "Test",
             email = "vennlige.foss@reiseapp.test",
             phoneNumber = "+47 0000 0011",
-            gender = "mann",
+            gender = 1,
         )
 
     private fun person(id: Long? = null): Person =
@@ -122,7 +122,7 @@ class PersonServiceTest {
             department = "Test",
             email = "vennlige.foss@reiseapp.test",
             phoneNumber = "+47 0000 0011",
-            gender = "mann",
+            gender = 1,
             registrationDate = OffsetDateTime.parse("2026-09-15T10:30:00+02:00"),
             id = id,
         )
@@ -134,7 +134,7 @@ class PersonServiceTest {
             department = "Test",
             email = "vennlige.foss@reiseapp.test",
             phoneNumber = "+47 0000 0011",
-            gender = "mann",
+            gender = 1,
             registrationDate = OffsetDateTime.parse("2026-09-15T10:30:00+02:00"),
         )
 }

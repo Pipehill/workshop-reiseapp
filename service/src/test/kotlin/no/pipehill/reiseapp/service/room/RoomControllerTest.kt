@@ -73,7 +73,7 @@ class RoomControllerTest {
     fun `gets a room or returns not found`() {
         val details = RoomDetailsResponse(204, 23, RoomDetailsResponse.NumberOfBeds._2, true, LocalDate.of(2024, 1, 1),
             listOf(PersonResponse(11, "Test Person", "Test", "test@reiseapp.test",
-                "+47 0000 0011", "mann", OffsetDateTime.parse("2026-09-15T10:30:00+02:00"))))
+                "+47 0000 0011", 1, OffsetDateTime.parse("2026-09-15T10:30:00+02:00"))))
         Mockito.`when`(service.findByNumber(204)).thenReturn(details)
         Mockito.`when`(service.findByNumber(999)).thenReturn(null)
 
@@ -86,6 +86,7 @@ class RoomControllerTest {
             .isEqualTo("2024-01-01")
         assertThat(mapper.readTree(response.body()).get("persons").get(0).get("registrationDate").asText())
             .isEqualTo("2026-09-15T10:30:00+02:00")
+        assertThat(mapper.readTree(response.body()).get("persons").get(0).get("gender").isIntegralNumber).isTrue()
         assertThat(sendGet("/rooms/999").statusCode()).isEqualTo(404)
     }
 

@@ -119,7 +119,7 @@ class PersonControllerTest {
         val response = HttpClient.newHttpClient().use { client ->
             val request = HttpRequest.newBuilder(URI("http://localhost:$port/persons"))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString("""{"name":"","department":"Test","email":"not-an-email","phoneNumber":"","gender":""}"""))
+                .POST(HttpRequest.BodyPublishers.ofString("""{"name":"","department":"Test","email":"not-an-email","phoneNumber":"","gender":0}"""))
                 .build()
             client.send(request, HttpResponse.BodyHandlers.ofString())
         }
@@ -143,7 +143,7 @@ class PersonControllerTest {
             department = "Test",
             email = "vennlige.foss@reiseapp.test",
             phoneNumber = "+47 0000 0011",
-            gender = "mann",
+            gender = 1,
         )
 
     private fun personResponse(): PersonResponse =
@@ -153,7 +153,7 @@ class PersonControllerTest {
             department = "Test",
             email = "vennlige.foss@reiseapp.test",
             phoneNumber = "+47 0000 0011",
-            gender = "mann",
+            gender = 1,
             registrationDate = OffsetDateTime.parse("2026-09-15T10:30:00+02:00"),
         )
 }
