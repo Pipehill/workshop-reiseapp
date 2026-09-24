@@ -198,7 +198,25 @@ Kjør `mvn clean verify` med JDK 25. Se README.md for detaljer.
 
 Rom-API-et er read-only og tilbyr `GET /rooms` og
 `GET /rooms/{roomNumber}`. Romresponsen inneholder romnummer, størrelse i
-kvadratmeter, antall senger (1, 2 eller 4), balkongflagg og siste renoveringsår.
+kvadratmeter, antall senger (1, 2 eller 4), balkongflagg og siste renoveringsdato.
+
+Datoformatene er bevisst ulike som en bestilt integrasjonsutfordring:
+aktiviteter bruker dato-/klokkeslettstrenger som `13.oct 09:00` uten år/tidssone,
+rom bruker `LocalDate` / PostgreSQL `DATE` satt til 1. januar i renoveringsåret,
+og personens `registrationDate` bruker `OffsetDateTime` / PostgreSQL
+`TIMESTAMP WITH TIME ZONE`. Nye personer får gjeldende tidspunkt i UTC.
+Romfeltets eksisterende API-identifikator `lastRenovatedYear` er bevart,
+men verdien er nå en dato som `2024-01-01`. Databasen håndhever 1. januar
+og år fra 1900 til 2100. V1–V4 og V7–V8 er endret direkte med nye dato-/tidsverdier
+i startdataene; eksisterende databaser må resettes eksplisitt av utvikleren.
+API og deltakerrettet dokumentasjon beskriver formatene nøytralt uten
+å avsløre læringsformålet. Gender, romstørrelsesfeltet og aktivitetsnotater
+er foreløpig uendret; disse endringene venter på gjennomgang av datotrinnet.
+Verifisert 24. september 2026 med `mvn --batch-mode --no-transfer-progress clean verify`
+mot isolert PostgreSQL 18.6: alle 62 tester bestod uten hoppede tester,
+inkludert JSON-formatene i liste-, detalj- og nestede responser, bevaring av
+registreringstidspunkt ved lagring med offset, databaseregler for romdatoer,
+aktiviteters månedsformat, datosortering og avvisning av aktivitet over midnatt.
 
 `service` bruker Spring Data JPA, Flyway 12.4.0, PostgreSQL-modulen for Flyway
 og PostgreSQL JDBC 42.7.13. `V1__create_person_table.sql` oppretter tabellen
@@ -210,7 +228,7 @@ initialisering, slik at vanlig omstart ikke overskriver, gjenoppretter eller
 dupliserer data. Reset av databasevolumet gjenoppretter de opprinnelige dataene.
 
 `V3__create_room_table.sql` oppretter `room` med romnummer som primærnøkkel,
-størrelse, antall senger, balkongflagg og siste renoveringsår.
+størrelse, antall senger, balkongflagg og siste renoveringsdato.
 `V4__seed_room_table.sql` legger inn 20 deterministiske rom med en blanding av
 enerom, tomannsrom og firemannsrom. Flyways migreringshistorikk gjør at rommene
 ikke dupliseres eller gjenopprettes ved vanlig omstart.
@@ -270,16 +288,19 @@ JPQL-oppslag i begge retninger og kontroll av seedet sengekapasitet.
 
 Aktivitets-API-et tilbyr bare `GET /activities` og
 `GET /activities/{activityId}`. Grunnresponsen `ActivityResponse` har ID,
-tittel, beskrivelse, maksantall deltakere, start/slutt som strenger i `HH:mm:ss`
+tittel, beskrivelse, maksantall deltakere, start/slutt som strenger som `13.oct 09:00`
 og `notes` som fritekst (tom streng når det ikke finnes råd).
 Listen sorteres på starttidspunkt og ID.
 V7 oppretter `activity` med `notes` (TEXT NOT NULL DEFAULT '') og regler for positiv
 kapasitet og varighet fra 2 til 8 timer inklusive, med slutt etter start samme dag.
-V8 seeder fem aktiviteter uten dato, med passende praktiske råd.
-Klokkeslett lagres som PostgreSQL `TIME WITHOUT TIME ZONE` og Kotlin `LocalTime`.
-Manglende dato og tidssone er en uttrykkelig bestilt integrasjonsutfordring:
-klienten kan ikke utlede dag eller tidssone fra API-et. Bevar denne begrensningen
-og ikke innfør dato/tidssone uten bestilling.
+V8 seeder fem aktiviteter 13. oktober 2026, med passende praktiske råd.
+Dato og klokkeslett lagres som PostgreSQL `TIMESTAMP WITHOUT TIME ZONE` og
+Kotlin `LocalDateTime`. Databasen håndhever at start og slutt er på samme dato.
+`toActivityTimeString` formaterer både direkte og nestede API-responser med
+dag uten innledende null, engelsk månedsforkortelse med små bokstaver og `HH:mm`.
+Manglende årstall og tidssone er en uttrykkelig bestilt integrasjonsutfordring:
+klienten får dag og måned, men kan ikke utlede år eller tidssone fra API-et.
+Bevar denne begrensningen og ikke eksponer år/tidssone uten bestilling.
 Ikke avslør læringsformålet eller omtale datakvaliteten som bevisst dårlig
 i API-kontrakten, API-responser eller deltakerrettet dokumentasjon.
 Beskriv format og oppførsel nøytralt; begrunnelsen beholdes i prosjektkonteksten her.

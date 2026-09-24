@@ -144,7 +144,7 @@ class ParticipationServiceTest {
             for (number in 1..2) {
                 activityIds.add(checkNotNull(jdbc.queryForObject(
                     "INSERT INTO activity (title, description, max_participants, start_time, end_time) " +
-                        "VALUES ('Test', 'Test', 1, '09:00:00', '11:00:00') RETURNING id",
+                        "VALUES ('Test', 'Test', 1, '2026-10-13 09:00:00', '2026-10-13 11:00:00') RETURNING id",
                     Long::class.java,
                 )))
                 personIds.add(checkNotNull(jdbc.queryForObject(

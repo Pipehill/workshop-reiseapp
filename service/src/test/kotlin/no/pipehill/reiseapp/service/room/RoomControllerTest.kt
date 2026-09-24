@@ -1,5 +1,6 @@
 package no.pipehill.reiseapp.service.room
 
+import java.time.OffsetDateTime
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -64,13 +65,15 @@ class RoomControllerTest {
             .startsWith("application/json")
         assertThat(mapper.readTree(response.body()))
             .isEqualTo(mapper.readTree(mapper.writeValueAsString(listOf(roomResponse()))))
+        assertThat(mapper.readTree(response.body()).get(0).get("lastRenovatedYear").asText())
+            .isEqualTo("2024-01-01")
     }
 
     @Test
     fun `gets a room or returns not found`() {
-        val details = RoomDetailsResponse(204, 23, RoomDetailsResponse.NumberOfBeds._2, true, 2024,
+        val details = RoomDetailsResponse(204, 23, RoomDetailsResponse.NumberOfBeds._2, true, LocalDate.of(2024, 1, 1),
             listOf(PersonResponse(11, "Test Person", "Test", "test@reiseapp.test",
-                "+47 0000 0011", "mann", LocalDate.of(2026, 9, 15))))
+                "+47 0000 0011", "mann", OffsetDateTime.parse("2026-09-15T10:30:00+02:00"))))
         Mockito.`when`(service.findByNumber(204)).thenReturn(details)
         Mockito.`when`(service.findByNumber(999)).thenReturn(null)
 
@@ -79,6 +82,10 @@ class RoomControllerTest {
         assertThat(response.statusCode()).isEqualTo(200)
         assertThat(mapper.readTree(response.body()))
             .isEqualTo(mapper.readTree(mapper.writeValueAsString(details)))
+        assertThat(mapper.readTree(response.body()).get("lastRenovatedYear").asText())
+            .isEqualTo("2024-01-01")
+        assertThat(mapper.readTree(response.body()).get("persons").get(0).get("registrationDate").asText())
+            .isEqualTo("2026-09-15T10:30:00+02:00")
         assertThat(sendGet("/rooms/999").statusCode()).isEqualTo(404)
     }
 
@@ -103,6 +110,6 @@ class RoomControllerTest {
             sizeSquareMeters = 23,
             numberOfBeds = RoomResponse.NumberOfBeds._2,
             hasBalcony = true,
-            lastRenovatedYear = 2024,
+            lastRenovatedYear = LocalDate.of(2024, 1, 1),
         )
 }

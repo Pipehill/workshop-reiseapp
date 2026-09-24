@@ -128,7 +128,7 @@ class AccommodationServiceTest {
         val roomNumbers = mutableListOf<Int>()
         try {
             for (number in listOf(9901, 9902)) {
-                jdbc.update("INSERT INTO room VALUES (?, 20, 1, FALSE, 2024)", number)
+                jdbc.update("INSERT INTO room VALUES (?, 20, 1, FALSE, DATE '2024-01-01')", number)
                 roomNumbers.add(number)
                 personIds.add(checkNotNull(jdbc.queryForObject(
                     "INSERT INTO person (name, department, email, phone_number, gender) " +

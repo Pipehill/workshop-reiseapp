@@ -273,6 +273,8 @@ Ctrl+C.
 
 En opprettingsforespørsel inneholder navn, avdeling, e-post, telefonnummer og
 kjønn. ID og registreringsdato settes av applikasjonen og returneres i responsen.
+`registrationDate` inneholder dato og klokkeslett med UTC-offset, for eksempel
+`2026-09-15T10:30:00Z`. Nye registreringer bruker UTC.
 Feltene valideres ut fra reglene i OpenAPI-kontrakten før servicelaget kalles.
 
 ## Rom-API
@@ -294,7 +296,9 @@ grunnopplysninger, slik at responsene ikke blir rekursive.
 | `GET /rooms/{roomNumber}` | HTTP 200 med rommet, HTTP 404 hvis det ikke finnes, eller HTTP 400 ved ugyldig romnummer |
 
 Et rom inneholder romnummer, størrelse i kvadratmeter, antall senger, balkongflagg
-og året rommet sist ble renovert. Antall senger er begrenset til 1, 2 eller 4.
+og dato for siste renovering. `lastRenovatedYear` er en datostreng som
+`2024-01-01`, satt til 1. januar i renoveringsåret, uten klokkeslett eller
+tidssone. Antall senger er begrenset til 1, 2 eller 4.
 Romdataene er read-only; API-et har ingen endepunkter for å opprette eller endre
 rom.
 
@@ -326,16 +330,20 @@ Dette hindrer overbooking ved samtidige API-kall og sikrer høyst ett rom per pe
 Begge responsene inneholder `id`, `title`, `description`,
 `maxParticipants`, `startTime`, `endTime` og `notes` (fritekst med
 praktiske råd og utstyr, tom streng hvis det ikke finnes råd).
-Tidene er klokkeslett i format `HH:mm:ss`, for eksempel `09:00:00`.
+Tidene er strenger med dag, engelsk månedsforkortelse med små bokstaver og
+klokkeslett, for eksempel `13.oct 09:00` og `13.oct 15:00`.
+Dag har ikke innledende null; årstall, sekunder og tidssone er utelatt.
 Varigheten er mellom 2 og 8 timer,
 inkludert grensene, og slutt må være etter start samme dag.
 Det finnes ingen endepunkter for å opprette eller endre selve aktivitetene.
 
 Flyway V7 oppretter `activity` med `notes` som fritekstfelt. Databasen håndhever
 positiv kapasitet, varighet og ikke-blanke tekstfelt. V8 seeder fem aktiviteter
-uten dato: fjelltur (6 timer), kajakktur (3 timer), matkurs (4 timer),
+13. oktober 2026: fjelltur (6 timer), kajakktur (3 timer), matkurs (4 timer),
 byvandring (2 timer) og skogstur (8 timer), alle med tilpassede praktiske råd.
 Seedingen kjøres én gang og overskriver ikke data ved senere oppstart.
+Start og slutt lagres som `TIMESTAMP WITHOUT TIME ZONE` og Kotlin
+`LocalDateTime`; API-et formaterer dem som strenger uten årstall.
 
 `ActivityRepository` henter aktiviteter med JPQL.
 `ActivityService` mapper til generert DTO innenfor read-only-transaksjoner,
@@ -466,7 +474,7 @@ Spring Boot kjører Flyway 12.4.0 ved oppstart. Migreringen
 | `email` | `VARCHAR(254)` | Påkrevd, ikke blank og unik uavhengig av store/små bokstaver |
 | `phone_number` | `VARCHAR(32)` | Påkrevd og kan ikke være blank |
 | `gender` | `VARCHAR(50)` | Påkrevd og kan ikke være blank |
-| `registration_date` | `DATE` | Påkrevd, standard er databasens gjeldende dato |
+| `registration_date` | `TIMESTAMP WITH TIME ZONE` | Påkrevd, standard er databasens gjeldende tidspunkt |
 
 `V2__seed_person_table.sql` legger inn 20 fiktive personer med faste data.
 Navnene består av adjektiv som fornavn og substantiv som etternavn; enkelte har
@@ -477,7 +485,8 @@ Flyway registrerer V2 etter første vellykkede kjøring. Derfor overskrives ikke
 endrede personer, og slettede personer gjenopprettes ikke ved vanlig omstart.
 `V3__create_room_table.sql` oppretter `room`-tabellen med romnummer som
 primærnøkkel og regler for positive størrelser, støttede sengantall og plausible
-renoveringsår. `V4__seed_room_table.sql` legger inn 20 rom fordelt på enerom,
+renoveringsdatoer. `last_renovated_year` lagres som `DATE` og må være 1. januar
+i et år fra 1900 til 2100. `V4__seed_room_table.sql` legger inn 20 rom fordelt på enerom,
 tomannsrom og firemannsrom, med varierte størrelser, balkonger og renoveringsår.
 
 `V5__create_person_room_table.sql` oppretter koblingstabellen `person_room`.
@@ -491,6 +500,10 @@ gang gjennom Flyway, også ved oppgradering av eksisterende databaser.
 En eksplisitt reset av databasevolumet kjører V1–V10 på nytt og gir den
 opprinnelige starttilstanden. Flyway- og PostgreSQL JDBC-versjonene styres av
 Spring Boot 4.1.1 dependency management.
+
+Datoendringene i V1–V4 og V7–V8 krever en eksplisitt reset av eksisterende databaser;
+migreringene og startdataene er oppdatert direkte. Bruk fremgangsmåten for reset
+av databasevolumet ovenfor før første oppstart med disse endringene.
 
 ### Repositorylag
 

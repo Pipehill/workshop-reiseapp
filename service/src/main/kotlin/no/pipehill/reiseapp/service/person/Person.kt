@@ -6,7 +6,8 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 @Entity
 @Table(name = "person")
@@ -22,7 +23,7 @@ class Person(
     @field:Column(nullable = false, length = 50)
     var gender: String,
     @field:Column(name = "registration_date", nullable = false, updatable = false)
-    var registrationDate: LocalDate = LocalDate.now(),
+    var registrationDate: OffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC),
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,

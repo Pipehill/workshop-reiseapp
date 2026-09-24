@@ -1,5 +1,6 @@
 package no.pipehill.reiseapp.service.person
 
+import java.time.OffsetDateTime
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -65,6 +66,8 @@ class PersonControllerTest {
             .startsWith("application/json")
         assertThat(mapper.readTree(response.body()))
             .isEqualTo(mapper.readTree(mapper.writeValueAsString(listOf(personResponse()))))
+        assertThat(mapper.readTree(response.body()).get(0).get("registrationDate").asText())
+            .isEqualTo("2026-09-15T10:30:00+02:00")
     }
 
     @Test
@@ -72,7 +75,7 @@ class PersonControllerTest {
         val details = personResponse().let {
             PersonDetailsResponse(it.id, it.name, it.department, it.email, it.phoneNumber,
                 it.gender, it.registrationDate,
-                assignedRoom = RoomResponse(104, 22, RoomResponse.NumberOfBeds._2, false, 2024))
+                assignedRoom = RoomResponse(104, 22, RoomResponse.NumberOfBeds._2, false, LocalDate.of(2024, 1, 1)))
         }
         Mockito.`when`(service.findById(11)).thenReturn(details)
         Mockito.`when`(service.findById(12)).thenReturn(null)
@@ -81,6 +84,10 @@ class PersonControllerTest {
         assertThat(response.statusCode()).isEqualTo(200)
         assertThat(mapper.readTree(response.body()).get("assignedRoom").get("roomNumber").asInt())
             .isEqualTo(104)
+        assertThat(mapper.readTree(response.body()).get("assignedRoom").get("lastRenovatedYear").asText())
+            .isEqualTo("2024-01-01")
+        assertThat(mapper.readTree(response.body()).get("registrationDate").asText())
+            .isEqualTo("2026-09-15T10:30:00+02:00")
         assertThat(sendGet("/persons/12").statusCode()).isEqualTo(404)
     }
 
@@ -103,6 +110,8 @@ class PersonControllerTest {
         assertThat(mapper.readTree(response.body()))
             .isEqualTo(mapper.readTree(mapper.writeValueAsString(personResponse())))
         Mockito.verify(service).add(requestDto)
+        assertThat(mapper.readTree(response.body()).get("registrationDate").asText())
+            .isEqualTo("2026-09-15T10:30:00+02:00")
     }
 
     @Test
@@ -145,6 +154,6 @@ class PersonControllerTest {
             email = "vennlige.foss@reiseapp.test",
             phoneNumber = "+47 0000 0011",
             gender = "mann",
-            registrationDate = LocalDate.of(2026, 9, 15),
+            registrationDate = OffsetDateTime.parse("2026-09-15T10:30:00+02:00"),
         )
 }
